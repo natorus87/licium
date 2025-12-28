@@ -16,6 +16,15 @@ The name also shares its roots with the English word *"to elicit"*—to draw out
 
 > **Project Realization**
 > This project was realized using **Vibe-Coding** and **Antigravity by Google**.
+---
+
+> [!CAUTION]  
+> **Development Status: Beta**  
+> Licium is currently in active development. While it is stable for daily use, please be aware that bugs and unexpected behavior may occur. **Always back up your data.**  
+> 
+> **Known Issue: Toast UI Editor**  
+> The underlying editor (Toast UI) has not been actively maintained since 2023. You may encounter minor glitches or limitations. I am aware of this layout and functional debt.  
+> **Future Plan**: I am planning to fork an maintain a dedicated version of the editor to address these specific issues and ensure long-term stability.
 
 ---
 
