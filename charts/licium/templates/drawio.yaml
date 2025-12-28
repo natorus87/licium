@@ -1,0 +1,52 @@
+{{- if .Values.drawio.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "licium.fullname" . }}-drawio
+  labels:
+    {{- include "licium.labels" . | nindent 4 }}
+    app.kubernetes.io/component: drawio
+spec:
+  replicas: {{ .Values.drawio.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "licium.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: drawio
+  template:
+    metadata:
+      labels:
+        {{- include "licium.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: drawio
+    spec:
+      containers:
+        - name: drawio
+          image: "{{ .Values.drawio.image.repository }}:{{ .Values.drawio.image.tag }}"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DRAWIO_BASE_URL
+              value: /drawio
+            - name: DRAWIO_SERVER_URL
+              value: http://{{ .Values.global.domain }}/drawio
+          resources:
+            {{- toYaml .Values.drawio.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "licium.fullname" . }}-drawio
+  labels:
+    {{- include "licium.labels" . | nindent 4 }}
+    app.kubernetes.io/component: drawio
+spec:
+  type: {{ .Values.drawio.service.type }}
+  ports:
+    - port: {{ .Values.drawio.service.port }}
+      targetPort: 8080
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "licium.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: drawio
+{{- end -}}

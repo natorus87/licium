@@ -1,0 +1,53 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: licium-route-secure
+  namespace: licium
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`licium.domain.local`) && PathPrefix(`/drawio`)
+      kind: Rule
+      services:
+        - name: drawio
+          port: 8080
+      middlewares:
+        - name: drawio-basic-auth
+    - match: Host(`licium.domain.local`) && PathPrefix(`/search`)
+      kind: Rule
+      services:
+        - name: searxng
+          port: 8080
+      middlewares:
+        - name: drawio-basic-auth
+    - match: Host(`licium.domain.local`) && PathPrefix(`/api`)
+      kind: Rule
+      services:
+        - name: backend
+          port: 3001
+      middlewares:
+        - name: limit-body-size
+    - match: Host(`licium.domain.local`)
+      kind: Rule
+      services:
+        - name: frontend
+          port: 80
+  tls: {}
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: licium-route-redirect
+  namespace: licium
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`licium.domain.local`)
+      kind: Rule
+      services:
+        - name: ping@internal # Noop, just need a service for the rule to be valid, often internally routed or irrelevant with redirect
+          kind: TraefikService # or just point to frontend, the middleware will intercept
+      middlewares:
+        - name: redirect-to-https

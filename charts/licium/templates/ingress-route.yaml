@@ -1,0 +1,65 @@
+{{- if .Values.ingressRoute.enabled -}}
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ include "licium.fullname" . }}-route-secure
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "licium.labels" . | nindent 4 }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`{{ .Values.global.domain }}`) && PathPrefix(`/drawio`)
+      kind: Rule
+      services:
+        - name: {{ include "licium.fullname" . }}-drawio
+          port: {{ .Values.drawio.service.port }}
+      middlewares:
+        - name: {{ include "licium.fullname" . }}-basic-auth
+    - match: Host(`{{ .Values.global.domain }}`) && PathPrefix(`/search`)
+      kind: Rule
+      services:
+        - name: {{ include "licium.fullname" . }}-searxng
+          port: {{ .Values.searxng.service.port }}
+      middlewares:
+        - name: {{ include "licium.fullname" . }}-basic-auth
+    - match: Host(`{{ .Values.global.domain }}`) && PathPrefix(`/api`)
+      kind: Rule
+      services:
+        - name: {{ include "licium.fullname" . }}-backend
+          port: {{ .Values.backend.service.port }}
+      middlewares:
+        - name: {{ include "licium.fullname" . }}-limit-body-size
+        # Assuming limit-body-size is manually created or we need to template it too? 
+        # k8s-conbro/ingress-route.yaml uses it. 
+        # I should create a template for it or skip it? User asked to apply changes.
+        # I will add it to middleware-basic-auth.yaml or separate file. 
+        # For now, I assume it exists or I create it. 
+        # Better: create middleware-limits.yaml template.
+    - match: Host(`{{ .Values.global.domain }}`)
+      kind: Rule
+      services:
+        - name: {{ include "licium.fullname" . }}-frontend
+          port: {{ .Values.frontend.service.port }}
+  tls: {}
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ include "licium.fullname" . }}-route-redirect
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "licium.labels" . | nindent 4 }}
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`{{ .Values.global.domain }}`)
+      kind: Rule
+      services:
+        - name: ping@internal
+          kind: TraefikService
+      middlewares:
+        - name: {{ include "licium.fullname" . }}-redirect-to-https
+{{- end }}

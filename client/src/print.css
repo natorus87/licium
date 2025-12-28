@@ -1,0 +1,49 @@
+@media print {
+
+    /* Reset global layout locks */
+    html,
+    body,
+    #root {
+        height: auto !important;
+        overflow: visible !important;
+        position: static !important;
+    }
+
+    /* Hide UI elements */
+    header,
+    .panel-resize-handle,
+    /* Resizer */
+    div[class*="sidebar"],
+    /* Sidebar if identifiable by class */
+    button,
+    /* Toolbars often have buttons */
+    .toastui-editor-toolbar,
+    .toastui-editor-mode-switch,
+    .toastui-editor-statusbar {
+        display: none !important;
+    }
+
+    /* Target the editor content */
+    .toastui-editor-defaultUI {
+        border: none !important;
+    }
+
+    .toastui-editor-contents {
+        font-size: 12pt !important;
+    }
+
+    /* Ensure content flows */
+    .flex-1,
+    .h-full {
+        height: auto !important;
+        overflow: visible !important;
+        flex: none !important;
+    }
+
+    /* Specific fix for Toast UI Editor structure */
+    .toastui-editor-md-preview,
+    .toastui-editor-ww-container {
+        height: auto !important;
+        overflow: visible !important;
+    }
+}

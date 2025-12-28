@@ -1,0 +1,10 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: transport-timeout
+  namespace: licium
+spec:
+  forwardingTimeouts:
+    dialTimeout: 30s
+    responseHeaderTimeout: 1800s
+    idleConnTimeout: 1800s

@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  # Database
+  db:
+    image: pgvector/pgvector:pg15
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: licium
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - licium-network
+
+  # Backend Server
+  backend:
+    image: natorus87/licium-server:latest
+    restart: always
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgres://user:password@postgres:5432/licium
+      - JWT_SECRET=dev_secret_key_change_me
+      - IB_API_TOKEN=dev-secret-token
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+    networks:
+      - licium-network
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+
+  # Frontend Client
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    image: natorus87/licium-client:latest
+    restart: always
+    environment:
+      - API_TOKEN=dev-secret-token
+    ports:
+      - "80:80"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+      # Mount custom nginx config to enable API proxying
+      - ./docker-compose-nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
+      - drawio
+      - searxng
+    networks:
+      - licium-network
+
+  # Draw.io (Diagrams)
+  drawio:
+    image: jgraph/drawio
+    restart: always
+    environment:
+      - DRAWIO_BASE_URL=/drawio
+      - DRAWIO_SERVER_URL=http://localhost/drawio
+    networks:
+      - licium-network
+
+  # SearXNG (Web Search)
+  searxng:
+    image: searxng/searxng:latest
+    restart: always
+    volumes:
+      - ./searxng-settings.yml:/etc/searxng/settings.yml
+    environment:
+      - SEARXNG_BASE_URL=http://localhost/search
+    networks:
+      - licium-network
+
+  # Whisper (Speech-to-Text)
+  whisper:
+    image: fedirz/faster-whisper-server:latest-cpu
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - WHISPER__MODEL=deepdml/faster-whisper-large-v3-turbo-ct2
+      - WHISPER__COMPUTE_TYPE=int8
+    volumes:
+      - whisper-cache:/root/.cache/huggingface
+    networks:
+      - licium-network
+
+volumes:
+  db_data:
+  whisper-cache:
+
+networks:
+  licium-network:
+    driver: bridge

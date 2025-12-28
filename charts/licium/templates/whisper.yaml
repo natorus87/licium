@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "licium.fullname" . }}-whisper
+  labels:
+    {{- include "licium.labels" . | nindent 4 }}
+    app.kubernetes.io/component: whisper
+spec:
+  replicas: {{ .Values.whisper.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "licium.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: whisper
+  template:
+    metadata:
+      labels:
+        {{- include "licium.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: whisper
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: whisper
+          image: "{{ .Values.whisper.image.repository }}:{{ .Values.whisper.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          env:
+            - name: WHISPER_MODEL
+              value: "{{ .Values.whisper.env.WHISPER_MODEL }}"
+            - name: WHISPER_COMPUTE_TYPE
+              value: "{{ .Values.whisper.env.WHISPER_COMPUTE_TYPE }}"
+          resources:
+            {{- toYaml .Values.whisper.resources | nindent 12 }}
+          volumeMounts:
+            - name: whisper-cache
+              mountPath: /root/.cache/huggingface
+      volumes:
+        - name: whisper-cache
+          {{- if .Values.whisper.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "licium.fullname" . }}-whisper-pvc
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whisper
+  labels:
+    {{- include "licium.labels" . | nindent 4 }}
+    app.kubernetes.io/component: whisper
+spec:
+  type: {{ .Values.whisper.service.type }}
+  ports:
+    - port: {{ .Values.whisper.service.port }}
+      targetPort: {{ .Values.whisper.service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "licium.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: whisper

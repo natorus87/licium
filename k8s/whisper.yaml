@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whisper
+  namespace: licium
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: whisper
+  template:
+    metadata:
+      labels:
+        app: whisper
+    spec:
+      containers:
+        - name: whisper
+          image: fedirz/faster-whisper-server:latest-cpu
+          resources:
+            limits:
+              memory: "4Gi"
+              cpu: "2000m"
+            requests:
+              memory: "2Gi"
+              cpu: "1000m"
+          ports:
+            - containerPort: 8000
+          env:
+            - name: WHISPER__MODEL
+              value: "deepdml/faster-whisper-large-v3-turbo-ct2"
+            - name: WHISPER__COMPUTE_TYPE
+              value: "int8"
+          volumeMounts:
+            - name: whisper-cache
+              mountPath: /root/.cache/huggingface
+      volumes:
+        - name: whisper-cache
+          persistentVolumeClaim:
+            claimName: whisper-cache-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whisper
+  namespace: licium
+spec:
+  selector:
+    app: whisper
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000

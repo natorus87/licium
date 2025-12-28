@@ -1,0 +1,14 @@
+{{- if .Values.ingressRoute.enabled -}}
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: {{ include "licium.fullname" . }}-transport-timeout
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "licium.labels" . | nindent 4 }}
+spec:
+  forwardingTimeouts:
+    dialTimeout: 30s
+    responseHeaderTimeout: 1800s
+    idleConnTimeout: 1800s
+{{- end }}

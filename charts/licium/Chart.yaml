@@ -1,0 +1,6 @@
+apiVersion: v2
+name: licium
+description: A Helm chart for Licium - The AI-Powered Notebook
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

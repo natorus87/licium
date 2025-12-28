@@ -1,0 +1,9 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: drawio-basic-auth
+  namespace: licium
+spec:
+  basicAuth:
+    secret: licium-secrets
+    realm: "Draw.io Access"

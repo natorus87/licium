@@ -1,0 +1,70 @@
+{
+  "root": [
+    {
+      "id": "root-folder",
+      "parentId": null,
+      "type": "folder",
+      "title": "My Notes",
+      "createdAt": "2025-11-24T10:19:28.829Z",
+      "updatedAt": "2025-11-24T10:19:28.829Z",
+      "children": []
+    },
+    {
+      "id": "1a372ac0-4a8f-43f0-af8c-6a4f933e3d63",
+      "parentId": null,
+      "type": "note",
+      "title": "Moresophy",
+      "contentMarkdown": "",
+      "createdAt": "2025-11-24T11:06:17.135Z",
+      "updatedAt": "2025-11-24T14:26:02.318Z"
+    },
+    {
+      "id": "71fc123e-02b9-4ae7-ab23-3b3cd76c798b",
+      "parentId": null,
+      "type": "folder",
+      "title": "Moresophy",
+      "children": [
+        {
+          "id": "2a37581d-bc7b-45f8-94e0-1cedca63096a",
+          "parentId": "71fc123e-02b9-4ae7-ab23-3b3cd76c798b",
+          "type": "folder",
+          "title": "IfS",
+          "children": [
+            {
+              "id": "d6ec39b0-5c01-4d76-8e8d-c74f1cd0c369",
+              "parentId": "2a37581d-bc7b-45f8-94e0-1cedca63096a",
+              "type": "folder",
+              "title": "Kubernetes",
+              "children": [
+                {
+                  "id": "b746d5d7-24ea-48b1-baed-0c06e97ad8e3",
+                  "parentId": "d6ec39b0-5c01-4d76-8e8d-c74f1cd0c369",
+                  "type": "note",
+                  "title": "Update",
+                  "contentMarkdown": "**Longhorn‑Upgrade – Schritt-für-Schritt Anleitung**\n \n1. **Helmchart-Version aktualisieren**  \n   - Setze die Helmchart‑Version auf die neueste Version.  \n   - Tausche anschließend alle `values.yaml`‑Einträge gegen die der neuen Version aus.  \n   - Vergleiche alle Änderungen, um sicherzustellen, dass keine wichtigen Parameter verloren gehen.\n\n2. **Engine‑Upgrade der bestehenden Volumes aktivieren**  \n   - In den `values.yaml` muss die Option **`concurrentAutomaticEngineUpgradePerNodeLimit`** mindestens auf `\"1\"` gesetzt werden.  \n   - Für bessere Performance empfiehlt sich der Wert `\"3\"`.  \n\nBeispiel:  \n```yaml\nconcurrentAutomaticEngineUpgradePerNodeLimit: \"1\"   # Mindestwert, `\"3\"` ist optimal\n```\n\n**Wichtig:** Ohne diese Einstellung werden die bestehenden Longhorn‑Volumes nicht auf die neue Engine-Version migriert.",
+                  "createdAt": "2025-11-24T11:07:01.678Z",
+                  "updatedAt": "2025-11-24T14:35:04.889Z"
+                }
+              ],
+              "createdAt": "2025-11-24T11:06:53.339Z",
+              "updatedAt": "2025-11-24T11:06:53.339Z"
+            }
+          ],
+          "createdAt": "2025-11-24T11:06:43.059Z",
+          "updatedAt": "2025-11-24T11:06:43.059Z"
+        }
+      ],
+      "createdAt": "2025-11-24T11:06:24.599Z",
+      "updatedAt": "2025-11-24T11:06:24.599Z"
+    },
+    {
+      "id": "de97193f-9a43-48eb-9dbe-7d31f5cf3c37",
+      "parentId": null,
+      "type": "note",
+      "title": "notes",
+      "contentMarkdown": "Forschungsergebnisse aus der Heilpädagogik eröffnen einen Zugang zu Erkenntnissen darüber, wie Menschen mit unterschiedlichen Entwicklungsbedingungen lernen, leben und teilhaben können. Sie zeigen, welche pädagogischen Ansätze wirksam sind, welche Bedingungen Teilhabe fördern und wie individuelle Ressourcen gestärkt werden können. Heilpädagogische Forschung verbindet dabei wissenschaftliche Evidenz mit den Lebenswelten der Menschen, um Unterstützung nicht über, sondern mit ihnen zu gestalten.\n\nDieser Denkraum lädt dazu ein, Forschungsergebnisse nicht als fertige Lösungen zu verstehen, sondern als Impuls für Reflexion, Veränderung und gemeinsames Lernen. Sie machen sichtbar, wie komplex menschliche Entwicklung ist – und wie bedeutsam die Gestaltung von Beziehungen, Lernumgebungen und gesellschaftlichen Rahmenbedingungen bleibt. Forschungsergebnisse können Orientierung geben, aber sie fordern uns ebenso heraus, eigene professionelle Haltungen zu prüfen, neue Wege auszuprobieren und bewährte Strukturen weiterzuentwickeln.\n\nDer Denkraum stellt damit Fragen wie:\n– Welche Erkenntnisse der Heilpädagogik sind heute besonders relevant?\n– Wie verbinden wir empirisches Wissen mit der Praxis vor Ort?\n– Wie können Forschungsergebnisse dazu beitragen, Teilhabechancen zu verbessern?\n– Und wie unterstützt wissenschaftliche Evidenz ein inklusives und menschenwürdiges Miteinander?\n\nSo wird der Blick geöffnet für die Möglichkeiten, die entstehen, wenn Wissenschaft, Praxis und Haltung zusammenwirken — und heilpädagogische Forschung uns hilft, Wege zu gestalten, die Menschen in ihrer Vielfalt stärken.\n\n\n",
+      "createdAt": "2025-11-24T12:34:49.748Z",
+      "updatedAt": "2025-11-24T14:27:03.402Z"
+    }
+  ]
+}

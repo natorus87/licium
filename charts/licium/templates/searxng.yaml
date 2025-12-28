@@ -1,0 +1,80 @@
+{{- if .Values.searxng.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "licium.fullname" . }}-searxng-settings
+  labels:
+    {{- include "licium.labels" . | nindent 4 }}
+    app.kubernetes.io/component: searxng
+data:
+  settings.yml: |
+    use_default_settings: true
+    server:
+      secret_key: "{{ .Values.searxng.secretKey }}"
+      base_url: "http://{{ .Values.global.domain }}/search"
+      bind_address: "0.0.0.0"
+      port: 8080
+      image_proxy: true
+    general:
+      debug: false
+    search:
+      formats:
+        - html
+        - json
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "licium.fullname" . }}-searxng
+  labels:
+    {{- include "licium.labels" . | nindent 4 }}
+    app.kubernetes.io/component: searxng
+spec:
+  replicas: {{ .Values.searxng.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "licium.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: searxng
+  template:
+    metadata:
+      labels:
+        {{- include "licium.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: searxng
+    spec:
+      containers:
+        - name: searxng
+          image: "{{ .Values.searxng.image.repository }}:{{ .Values.searxng.image.tag }}"
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SEARXNG_BASE_URL
+              value: "http://{{ .Values.global.domain }}/search"
+          volumeMounts:
+            - name: settings
+              mountPath: /etc/searxng/settings.yml
+              subPath: settings.yml
+          resources:
+            {{- toYaml .Values.searxng.resources | nindent 12 }}
+      volumes:
+        - name: settings
+          configMap:
+            name: {{ include "licium.fullname" . }}-searxng-settings
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "licium.fullname" . }}-searxng
+  labels:
+    {{- include "licium.labels" . | nindent 4 }}
+    app.kubernetes.io/component: searxng
+spec:
+  type: {{ .Values.searxng.service.type }}
+  ports:
+    - port: {{ .Values.searxng.service.port }}
+      targetPort: 8080
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "licium.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: searxng
+{{- end -}}

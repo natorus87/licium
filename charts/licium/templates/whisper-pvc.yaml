@@ -1,0 +1,15 @@
+{{- if and .Values.whisper.enabled .Values.whisper.persistence.enabled -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "licium.fullname" . }}-whisper-pvc
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "licium.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.whisper.persistence.size }}
+{{- end }}

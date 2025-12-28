@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: embeddings
+  namespace: licium
+  labels:
+    app: embeddings
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
+  selector:
+    app: embeddings
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: embeddings
+  namespace: licium
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: embeddings
+  template:
+    metadata:
+      labels:
+        app: embeddings
+    spec:
+      containers:
+        - name: embeddings
+          image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.8
+          args:
+            - --model-id
+            - sentence-transformers/all-MiniLM-L6-v2
+            - --port
+            - "8080"
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          volumeMounts:
+            - name: embeddings-cache
+              mountPath: /data
+      volumes:
+        - name: embeddings-cache
+          emptyDir: {}

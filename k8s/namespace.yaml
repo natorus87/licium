@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: licium
+  labels:
+    app.kubernetes.io/name: licium
+    app.kubernetes.io/part-of: licium
