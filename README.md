@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/logo.png" width="200" alt="Licium Logo" />
+  <img src="assets/logo.png" width="600" alt="Licium Logo" />
   <h1>Licium – From Chaos to Order</h1>
 </div>
 
