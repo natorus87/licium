@@ -1,4 +1,7 @@
-# Licium – From Chaos to Order
+<div align="center">
+  <img src="assets/logo.png" width="200" alt="Licium Logo" />
+  <h1>Licium – From Chaos to Order</h1>
+</div>
 
 Licium is a smart, AI-powered note-taking application designed to bridge the gap between structured documentation, free-form writing, and artificial intelligence.
 
@@ -174,6 +177,30 @@ If you prefer running individual containers:
       natorus87/licium-client:latest
     ```
     *Note: Without a custom network or Nginx config, the frontend might not reach the backend API correctly in this manual mode. Docker Compose is strongly recommended.*
+
+---
+
+## 🚀 Getting Started
+
+Once you have deployed Licium, follow these steps to get your instance ready:
+
+### 1. Create the Admin Account
+The **first user** to register on a fresh instance is automatically granted **Admin** privileges.
+1. Navigate to your Licium frontend (e.g., `http://localhost:8080`).
+2. Click on **Register**.
+3. Create your account. You now have full control over the instance (User Management, System Settings).
+
+### 2. Configure AI Providers
+Go to **Settings → AI Connections** to set up your preferred LLM.
+- **Default Behavior**: Licium may come pre-configured to look for a local Ollama instance or OpenAI (depending on env vars).
+- **Ollama (Local)**: Ensure your Ollama instance is reachable. Use `http://host.docker.internal:11434` if running in Docker containers.
+- **OpenAI**: Enter your API Key if you wish to use cloud-based models.
+
+### 3. Verify Whisper (Audio)
+If you deployed the Whisper container:
+- Go to **Settings → System Checks** (if available) or simply try recording an audio note.
+- **Note**: The first transcription might take a few seconds longer as the model initializes.
+- **Tip**: Ensure you have selected the correct input device in your browser globally.
 
 ---
 
