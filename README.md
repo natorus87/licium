@@ -25,16 +25,15 @@ The name also shares its roots with the English word *"to elicit"*—to draw out
 > **Development Status: Beta**  
 > Licium is currently in active development. While it is stable for daily use, please be aware that bugs and unexpected behavior may occur. **Always back up your data.**  
 > 
-> **Known Issue: Toast UI Editor**  
-> The underlying editor (Toast UI) has not been actively maintained since 2023. You may encounter minor glitches or limitations. I am aware of this layout and functional debt.  
-> **Future Plan**: I am planning to fork an maintain a dedicated version of the editor to address these specific issues and ensure long-term stability.
+> **Editor Update**
+> Licium now utilizes the `@licium` scoped editor packages (a maintained fork of Toast UI) to ensure stability and support modern features like Tailwind dark mode integration.
 
 ---
 
 ## Features
 
 ### 📝 Core Editor & Note Management
-- **WYSIWYG Markdown Editor**: Powered by Toast UI, giving you a rich editing experience while maintaining full Markdown compatibility.
+- **WYSIWYG Markdown Editor**: Powered by the `@licium` editor (maintained fork), giving you a rich editing experience while maintaining full Markdown compatibility.
 - **Tree-Based Organization**: Organize your notes hierarchically with folders and files. Supports Drag-and-Drop functionality for intuitive restructuring.
 - **Robust Persistence**: Notes are securely stored in a PostgreSQL database with a reliable saving mechanism that handles network latency and rapid switching.
 - **Image Handling**: Drag & drop or paste images directly into your notes. Includes a custom context menu for resizing (Small/Medium/Large).
@@ -65,7 +64,7 @@ Licium features a clean, professional interface with automatic **Dark Mode** sup
 </div>
 
 ### 📝 Core Editor & Note Management
-- **WYSIWYG Markdown Editor**: Powered by Toast UI, giving you a rich editing experience while maintaining full Markdown compatibility.
+- **WYSIWYG Markdown Editor**: Powered by the `@licium` editor (maintained fork), giving you a rich editing experience while maintaining full Markdown compatibility.
 - **Tree-Based Organization**: Organize your notes hierarchically with folders and files. Supports Drag-and-Drop functionality for intuitive restructuring.
 - **Robust Persistence**: Notes are securely stored in a PostgreSQL database with a reliable saving mechanism.
 

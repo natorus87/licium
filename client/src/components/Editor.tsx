@@ -1,16 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
-import '@toast-ui/editor/dist/toastui-editor.css';
-import '@toast-ui/editor/dist/theme/toastui-editor-dark.css';
-import '@toast-ui/editor/dist/i18n/de-de';
-import { Editor as ToastEditor } from '@toast-ui/react-editor';
+import '@licium/editor/dist/toastui-editor.css';
+import '@licium/editor/dist/theme/toastui-editor-dark.css';
+import '@licium/editor/dist/i18n/de-de';
+import { Editor as ToastEditor } from '@licium/react-editor';
 import { useStore } from '../store';
 import { translations } from '../i18n/translations';
 import { UploadCloud, Download, Clock, RotateCcw, Mic, Workflow, Save, MoreVertical } from 'lucide-react';
 import { AudioRecorder } from './AudioRecorder';
 // Syntax Highlighting
-import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight';
-import '@toast-ui/editor-plugin-code-syntax-highlight/dist/toastui-editor-plugin-code-syntax-highlight.css';
+import codeSyntaxHighlight from '@licium/editor-plugin-code-syntax-highlight';
+import '@licium/editor-plugin-code-syntax-highlight/dist/toastui-editor-plugin-code-syntax-highlight.css';
 import Prism from 'prismjs';
 import 'prismjs/themes/prism-okaidia.css';
 
@@ -25,13 +25,18 @@ import 'prismjs/components/prism-sql';
 import 'prismjs/components/prism-docker';
 
 // Additional Plugins
-import chart from '@toast-ui/editor-plugin-chart';
-import uml from '@toast-ui/editor-plugin-uml';
-import tableMergedCell from '@toast-ui/editor-plugin-table-merged-cell';
-import colorSyntax from '@toast-ui/editor-plugin-color-syntax';
+import chart from '@licium/editor-plugin-chart';
+import uml from '@licium/editor-plugin-uml';
+import tableMergedCell from '@licium/editor-plugin-table-merged-cell';
+import colorSyntax from '@licium/editor-plugin-color-syntax';
+import details from '@licium/editor-plugin-details';
+import textAlign from '@licium/editor-plugin-text-align';
+import emoji from '@licium/editor-plugin-emoji';
 
 import 'tui-color-picker/dist/tui-color-picker.css';
-import '@toast-ui/editor-plugin-color-syntax/dist/toastui-editor-plugin-color-syntax.css';
+import '@licium/editor-plugin-color-syntax/dist/toastui-editor-plugin-color-syntax.css';
+import '@licium/editor-plugin-text-align/dist/toastui-editor-plugin-text-align.css';
+import '@licium/editor-plugin-emoji/dist/toastui-editor-plugin-emoji.css';
 
 
 export const Editor: React.FC = () => {
@@ -995,7 +1000,10 @@ export const Editor: React.FC = () => {
                         colorSyntax,
                         chart,
                         uml,
-                        tableMergedCell
+                        tableMergedCell,
+                        details,
+                        textAlign,
+                        emoji
                     ]}
                     widgetRules={[
                         {

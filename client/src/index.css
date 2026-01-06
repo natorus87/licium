@@ -272,13 +272,16 @@ body,
 }
 
 /* Dark Mode Toolbar */
+/* Dark Mode Toolbar */
+.dark .toastui-editor-defaultUI-toolbar,
 .dark .toastui-editor-defaultUI .toastui-editor-toolbar {
-  background-color: #1f2937;
+  --toastui-editor-toolbar-bg: #1f2937;
+  /* fallback if variable not used by specific version */
+  background-color: var(--toastui-editor-toolbar-bg, #1f2937) !important;
   border-bottom: 1px solid #374151;
   height: var(--toolbar-height);
   min-height: var(--toolbar-height);
   box-sizing: border-box;
-  /* Ensure border acts predictably */
 }
 
 .dark .toastui-editor-defaultUI .toastui-editor-toolbar button {
