@@ -37,6 +37,8 @@ import 'tui-color-picker/dist/tui-color-picker.css';
 import '@licium/editor-plugin-color-syntax/dist/toastui-editor-plugin-color-syntax.css';
 import '@licium/editor-plugin-text-align/dist/toastui-editor-plugin-text-align.css';
 import '@licium/editor-plugin-emoji/dist/toastui-editor-plugin-emoji.css';
+import '@licium/editor-plugin-details/dist/toastui-editor-plugin-details.css';
+import '@licium/editor-plugin-table-merged-cell/dist/toastui-editor-plugin-table-merged-cell.css';
 
 
 export const Editor: React.FC = () => {
