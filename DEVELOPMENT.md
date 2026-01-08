@@ -578,3 +578,29 @@ Releases are managed via GitHub CLI (`gh`).
    gh release create vX.Y.Z --title "vX.Y.Z - <Title>" --notes-file CHANGELOG.md
    ```
    *Note: This will automatically create the tag and the release on GitHub.*
+
+## 12. Tree View & Navigation
+Features related to the Sidebar/Explorer file tree.
+
+### Drag & Drop Reordering
+**Problem**: Browsers often block `drop` events if the drop target is the same element as the draggable element.
+**Solution**:
+- **Structure**: Separated the node component into an **Outer Wrapper** (Drop Zone) and an **Inner Element** (Draggable).
+- **Logic**:
+  - **Stateless Calculation**: `onDrop` calculates drop position (Top/Inside/Bottom) based on mouse geometry relative to the target rect, independent of potentially stale state.
+  - **API**: `PUT /notes/reorder` handles batch updates of `position` and `parent_id`.
+
+### Auto-Sort
+**Goal**: Allow users to automatically organize notes/folders without manual dragging.
+**Endpoint**: `POST /notes/sort`
+**Logic**:
+1. **Numeric Prefix**: Items starting with numbers (e.g., "1. Intro", "10. Summary") are sorted numerically (1 < 2 < 10).
+2. **Alphabetical**: Remaining items (or items with same number) are sorted alphabetically (A-Z, case-insensitive).
+**UI**: Accessible via the "Sort" (ArrowUpDown) button in the Sidebar header.
+
+### Editor Toolbar Responsiveness
+**Problem**: On small screens, the fixed-width toolbar buttons provided by Toast UI Editor would get cut off.
+**Solution**:
+- **Native Overflow**: Reverted to fixed height but added `overflow: visible` to the toolbar container to allow the native "More" (⋮) menu to appear.
+- **Button Sizing**: Applied `flex-shrink: 0` to toolbar groups to prevent buttons from being compressed before the overflow triggers.
+- **Simplification**: Removed less commonly used buttons (`indent`, `outdent`) to save space.

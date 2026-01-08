@@ -264,24 +264,33 @@ body,
   --toolbar-height: 46px;
 }
 
-/* Light Mode Toolbar Height */
+/* Light Mode Toolbar - Fixed height, allow native overflow menu */
 .toastui-editor-defaultUI .toastui-editor-toolbar {
   height: var(--toolbar-height);
   min-height: var(--toolbar-height);
   box-sizing: border-box;
+  overflow: visible;
 }
 
-/* Dark Mode Toolbar */
-/* Dark Mode Toolbar */
+/* Prevent toolbar button groups from shrinking */
+.toastui-editor-toolbar-group {
+  flex-shrink: 0;
+}
+
+.toastui-editor-toolbar-icons {
+  flex-shrink: 0;
+}
+
+/* Dark Mode Toolbar - Fixed height, allow native overflow menu */
 .dark .toastui-editor-defaultUI-toolbar,
 .dark .toastui-editor-defaultUI .toastui-editor-toolbar {
   --toastui-editor-toolbar-bg: #1f2937;
-  /* fallback if variable not used by specific version */
   background-color: var(--toastui-editor-toolbar-bg, #1f2937) !important;
   border-bottom: 1px solid #374151;
   height: var(--toolbar-height);
   min-height: var(--toolbar-height);
   box-sizing: border-box;
+  overflow: visible;
 }
 
 .dark .toastui-editor-defaultUI .toastui-editor-toolbar button {

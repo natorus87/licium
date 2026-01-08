@@ -34,6 +34,23 @@ def create_icons():
         icon_512 = img.resize((512, 512), Image.Resampling.LANCZOS)
         icon_512.save('public/icon-512.png', 'PNG')
         print("Created public/icon-512.png")
+
+        # 4. favicon.ico (Multiple sizes)
+        # ICO format supports containing multiple sizes in one file.
+        # We will create 16x16, 32x32, 48x48, 64x64 versions.
+        icon_sizes = [(16, 16), (32, 32), (48, 48), (64, 64)]
+        favicon_images = []
+        for size in icon_sizes:
+            favicon_images.append(img.resize(size, Image.Resampling.LANCZOS))
+        
+        # Save as ICO with all sizes
+        favicon_images[0].save(
+            'public/favicon.ico', 
+            format='ICO', 
+            sizes=icon_sizes, 
+            append_images=favicon_images[1:]
+        )
+        print("Created public/favicon.ico")
         
         # Cleanup any old versions to be safe?
         # subprocess.run(['rm', 'public/apple-touch-icon-*.png'], check=False)

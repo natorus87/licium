@@ -41,9 +41,27 @@ export function AudioRecorder({ onTranscriptionComplete, onClose, language, t }:
         checkStatus();
     }, []);
 
+    const streamRef = useRef<MediaStream | null>(null);
+
+    // Cleanup tracks on unmount
+    useEffect(() => {
+        return () => {
+            if (streamRef.current) {
+                streamRef.current.getTracks().forEach(track => track.stop());
+            }
+        };
+    }, []);
+
     const startRecording = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            let stream = streamRef.current;
+
+            // Reuse existing stream if active
+            if (!stream || !stream.active) {
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                streamRef.current = stream;
+            }
+
             mediaRecorderRef.current = new MediaRecorder(stream);
             chunksRef.current = [];
 
@@ -57,8 +75,7 @@ export function AudioRecorder({ onTranscriptionComplete, onClose, language, t }:
                 const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
                 await transcribeAudio(audioBlob);
 
-                // Stop all tracks to release microphone
-                stream.getTracks().forEach(track => track.stop());
+                // NOTE: We do NOT stop tracks here to allow stream reuse without new permission prompt
             };
 
             mediaRecorderRef.current.start();

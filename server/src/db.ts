@@ -57,6 +57,16 @@ export async function initializeDatabase() {
             END $$;
         `);
 
+        // Migration: Add position to notes for sorting
+        await pool.query(`
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='notes' AND column_name='position') THEN
+                    ALTER TABLE notes ADD COLUMN position DOUBLE PRECISION DEFAULT 0;
+                END IF;
+            END $$;
+        `);
+
         await pool.query(`
             CREATE TABLE IF NOT EXISTS settings (
                 key TEXT PRIMARY KEY,

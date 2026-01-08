@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "licium.fullname" . }}-embeddings
+  labels:
+    {{- include "licium.labels" . | nindent 4 }}
+    app.kubernetes.io/component: embeddings
+spec:
+  replicas: {{ .Values.embeddings.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "licium.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: embeddings
+  template:
+    metadata:
+      labels:
+        {{- include "licium.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: embeddings
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: embeddings
+          image: "{{ .Values.embeddings.image.repository }}:{{ .Values.embeddings.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - --model-id
+            - sentence-transformers/all-MiniLM-L6-v2
+            - --port
+            - "8080"
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.embeddings.resources | nindent 12 }}
+          volumeMounts:
+            - name: embeddings-cache
+              mountPath: /data
+      volumes:
+        - name: embeddings-cache
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "licium.fullname" . }}-embeddings
+  labels:
+    {{- include "licium.labels" . | nindent 4 }}
+    app.kubernetes.io/component: embeddings
+spec:
+  type: {{ .Values.embeddings.service.type }}
+  ports:
+    - port: {{ .Values.embeddings.service.port }}
+      targetPort: {{ .Values.embeddings.service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "licium.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: embeddings

@@ -9,6 +9,7 @@ export interface NoteNode {
     children?: NoteNode[];
     createdAt: string;
     updatedAt: string;
+    position?: number;
 }
 
 export interface User {

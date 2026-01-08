@@ -145,7 +145,7 @@ router.post('/register', async (req, res) => {
 
 const loginLimiter = rateLimit({
     windowMs: 60 * 1000, // 1 minute
-    max: 5, // Limit each IP to 5 login requests per windowMs
+    max: 20, // Limit each IP to 20 login requests per windowMs
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: 'Too many login attempts, please try again after 1 minute' }
@@ -292,9 +292,9 @@ router.get('/tree', requireAuth, async (req, res) => {
         return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    // Get all notes for user
+    // Get all notes for user (Sort by position, then by updated_at)
     const result = await query(
-        'SELECT id, parent_id, type, title, content_markdown, created_at, updated_at FROM notes WHERE user_id = $1',
+        'SELECT id, parent_id, type, title, content_markdown, created_at, updated_at, position FROM notes WHERE user_id = $1 ORDER BY position ASC, updated_at DESC',
         [userId]
     );
 
@@ -305,12 +305,13 @@ router.get('/tree', requireAuth, async (req, res) => {
     const rows = result.rows;
     const nodes: any[] = rows.map(row => ({
         id: row.id,
-        parentId: row.parent_id, // Postgres returns column names as is
+        parentId: row.parent_id,
         type: row.type,
         title: row.title,
         contentMarkdown: row.content_markdown,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
+        position: row.position || 0,
         children: []
     }));
 
@@ -326,7 +327,7 @@ router.get('/tree', requireAuth, async (req, res) => {
             if (parent) {
                 parent.children.push(node);
             } else {
-                rootNodes.push(node); // Orphaned or parent not found
+                rootNodes.push(node);
             }
         } else {
             rootNodes.push(node);
@@ -334,6 +335,84 @@ router.get('/tree', requireAuth, async (req, res) => {
     });
 
     res.json(rootNodes);
+});
+
+// Reorder Notes - MUST be at top level, NOT nested inside another route!
+router.put('/notes/reorder', requireAuth, async (req, res) => {
+    const { updates } = req.body;
+    const userId = req.session.userId;
+
+    if (!Array.isArray(updates)) {
+        return res.status(400).json({ error: 'Invalid updates format' });
+    }
+
+    try {
+        for (const update of updates) {
+            await query(
+                'UPDATE notes SET position = $1, parent_id = $2 WHERE id = $3 AND user_id = $4',
+                [update.position, update.parentId || null, update.id, userId]
+            );
+        }
+        res.json({ message: 'Updated' });
+    } catch (e) {
+        console.error("Reorder failed", e);
+        res.status(500).json({ error: 'Reorder failed' });
+    }
+});
+
+// Auto-Sort Notes: Numbers first, then alphabetical
+router.post('/notes/sort', requireAuth, async (req, res) => {
+    const { parentId } = req.body; // null for root level
+    const userId = req.session.userId;
+
+    try {
+        // Fetch all notes at this level
+        const result = await query(
+            'SELECT id, title FROM notes WHERE user_id = $1 AND parent_id IS NOT DISTINCT FROM $2',
+            [userId, parentId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.json({ message: 'Nothing to sort' });
+        }
+
+        // Sort: Numbers first (by numeric value), then alphabetical
+        const sorted = result.rows.sort((a, b) => {
+            const aTitle = a.title || '';
+            const bTitle = b.title || '';
+
+            // Check if titles start with numbers
+            const aNumMatch = aTitle.match(/^(\d+)/);
+            const bNumMatch = bTitle.match(/^(\d+)/);
+
+            if (aNumMatch && bNumMatch) {
+                // Both start with numbers - compare numerically
+                return parseInt(aNumMatch[1]) - parseInt(bNumMatch[1]);
+            } else if (aNumMatch) {
+                // Only A starts with number - A comes first
+                return -1;
+            } else if (bNumMatch) {
+                // Only B starts with number - B comes first
+                return 1;
+            } else {
+                // Neither starts with number - alphabetical (case-insensitive)
+                return aTitle.toLowerCase().localeCompare(bTitle.toLowerCase(), 'de');
+            }
+        });
+
+        // Assign new positions
+        for (let i = 0; i < sorted.length; i++) {
+            await query(
+                'UPDATE notes SET position = $1 WHERE id = $2 AND user_id = $3',
+                [(i + 1) * 65536, sorted[i].id, userId]
+            );
+        }
+
+        res.json({ message: 'Sorted' });
+    } catch (e) {
+        console.error("Sort failed", e);
+        res.status(500).json({ error: 'Sort failed' });
+    }
 });
 
 router.post('/notes', requireAuth, async (req, res) => {
@@ -398,6 +477,22 @@ router.put('/notes/:id', requireAuth, async (req, res) => {
         updateNoteEmbeddings(id, content);
     }
     res.json({ message: 'Updated' });
+});
+
+router.get('/notes/:id', requireAuth, async (req, res) => {
+    const { id } = req.params;
+    const userId = req.session.userId;
+
+    const result = await query(
+        'SELECT id, parent_id, type, title, content_markdown, created_at, updated_at FROM notes WHERE id = $1 AND user_id = $2',
+        [id, userId]
+    );
+
+    if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Note not found' });
+    }
+
+    res.json(result.rows[0]);
 });
 
 router.get('/notes/:id/versions', requireAuth, async (req, res) => {

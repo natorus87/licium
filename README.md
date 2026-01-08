@@ -38,7 +38,7 @@ The name also shares its roots with the English word *"to elicit"*—to draw out
 - **Robust Persistence**: Notes are securely stored in a PostgreSQL database with a reliable saving mechanism that handles network latency and rapid switching.
 - **Image Handling**: Drag & drop or paste images directly into your notes. Includes a custom context menu for resizing (Small/Medium/Large).
 - **Multimedia Support**: YouTube links are automatically converted into inline, playable video widgets.
-- **Plugins**: Integrated support for Charts, UML diagrams (Mermaid-style), and advanced table operations (merged cells).
+- **Plugins**: Integrated support for Charts, UML diagrams (Mermaid-style), Text Alignment, and advanced table operations (merged cells).
 
 ### 🤖 AI Integration
 - **Context-Aware Assistance**: Chat with your notes using your preferred LLM.

@@ -30,12 +30,12 @@ import uml from '@licium/editor-plugin-uml';
 import tableMergedCell from '@licium/editor-plugin-table-merged-cell';
 import colorSyntax from '@licium/editor-plugin-color-syntax';
 import details from '@licium/editor-plugin-details';
-import textAlign from '@licium/editor-plugin-text-align';
+import textAlignSimpel from '@licium/editor-plugin-text-align-simpel';
 import emoji from '@licium/editor-plugin-emoji';
 
 import 'tui-color-picker/dist/tui-color-picker.css';
 import '@licium/editor-plugin-color-syntax/dist/toastui-editor-plugin-color-syntax.css';
-import '@licium/editor-plugin-text-align/dist/toastui-editor-plugin-text-align.css';
+import '@licium/editor-plugin-text-align-simpel/dist/toastui-editor-plugin-text-align-simpel.css';
 import '@licium/editor-plugin-emoji/dist/toastui-editor-plugin-emoji.css';
 import '@licium/editor-plugin-details/dist/toastui-editor-plugin-details.css';
 import '@licium/editor-plugin-table-merged-cell/dist/toastui-editor-plugin-table-merged-cell.css';
@@ -993,7 +993,7 @@ export const Editor: React.FC = () => {
                     toolbarItems={[
                         ['heading', 'bold', 'italic', 'strike'],
                         ['hr', 'quote'],
-                        ['ul', 'ol', 'task', 'indent', 'outdent'],
+                        ['ul', 'ol', 'task'],
                         ['table', 'image', 'link'],
                         ['code', 'codeblock']
                     ]}
@@ -1004,7 +1004,7 @@ export const Editor: React.FC = () => {
                         uml,
                         tableMergedCell,
                         details,
-                        textAlign,
+                        textAlignSimpel,
                         emoji
                     ]}
                     widgetRules={[
@@ -1293,14 +1293,14 @@ export const Editor: React.FC = () => {
                 )
             }
 
-            {showRecorder && (
+            <div style={{ display: showRecorder ? 'block' : 'none' }}>
                 <AudioRecorder
                     onTranscriptionComplete={handleTranscription}
                     onClose={() => setShowRecorder(false)}
                     language={language}
                     t={t.audio}
                 />
-            )}
+            </div>
 
             {isHistoryModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setIsHistoryModalOpen(false)}>

@@ -20,7 +20,7 @@ app.set('trust proxy', 1); // Trust the first proxy (Ingress/Traefik)
 // Rate Limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
+    max: 2000, // Limit each IP to 2000 requests per windowMs (approx 2 req/sec)
     standardHeaders: true,
     legacyHeaders: false,
     message: 'Too many requests from this IP, please try again after 15 minutes'

@@ -146,7 +146,7 @@ export const embeddingService = {
     },
 
     // Chunking logic
-    chunkText: (text: string, chunkSize: number = 512, overlap: number = 100): string[] => {
+    chunkText: (text: string, chunkSize: number = 350, overlap: number = 100): string[] => {
         if (!text) return [];
         const chunks: string[] = [];
         let start = 0;

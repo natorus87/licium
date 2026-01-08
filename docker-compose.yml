@@ -91,9 +91,22 @@ services:
     networks:
       - licium-network
 
+  # Embeddings Service
+  embeddings:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.8
+    restart: always
+    command: --model-id sentence-transformers/all-MiniLM-L6-v2 --port 8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - embeddings-cache:/data
+    networks:
+      - licium-network
+
 volumes:
   db_data:
   whisper-cache:
+  embeddings-cache:
 
 networks:
   licium-network:

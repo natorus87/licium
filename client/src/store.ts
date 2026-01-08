@@ -64,6 +64,8 @@ interface AppState {
     duplicateNode: (id: string) => Promise<void>;
     renameNode: (id: string, title: string) => Promise<void>;
     moveNode: (id: string, parentId: string | null) => Promise<void>;
+    reorderNodes: (updates: { id: string; parentId: string | null; position: number }[]) => Promise<void>;
+    sortNodes: (parentId: string | null) => Promise<void>;
 
     // Chat
     sendChatMessage: (message: string, mode?: 'chat' | 'summarize' | 'rewrite' | 'structure', useSearch?: boolean, useContext?: boolean, includeNoteContent?: boolean, label?: string) => Promise<void>;
@@ -496,6 +498,24 @@ export const useStore = create<AppState>((set, get) => ({
     moveNode: async (id: string, parentId: string | null) => {
         await axios.put(`${API_URL}/notes/${id}/move`, { parentId }, { withCredentials: true });
         await get().fetchTree();
+    },
+
+    reorderNodes: async (updates) => {
+        try {
+            await axios.put(`${API_URL}/notes/reorder`, { updates }, { withCredentials: true });
+            await get().fetchTree();
+        } catch (error) {
+            console.error('Reorder failed:', error);
+        }
+    },
+
+    sortNodes: async (parentId: string | null) => {
+        try {
+            await axios.post(`${API_URL}/notes/sort`, { parentId }, { withCredentials: true });
+            await get().fetchTree();
+        } catch (error) {
+            console.error('Sort failed:', error);
+        }
     },
 
     sendChatMessage: async (message, mode = 'chat', useSearch = false, useContext = false, includeNoteContent = true, label?: string) => {

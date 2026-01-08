@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useStore } from '../store';
 import type { NoteNode } from '../types';
-import { Folder, FileText, ChevronRight, ChevronDown, Plus, Trash2, Edit2, Copy, Search } from 'lucide-react';
+import { Folder, FileText, ChevronRight, ChevronDown, Plus, Trash2, Edit2, Copy, Search, ArrowUpDown } from 'lucide-react';
 
 import { translations } from '../i18n/translations';
 
@@ -11,23 +11,25 @@ import { translations } from '../i18n/translations';
 interface TreeNodeProps {
     node: NoteNode;
     level: number;
+    siblings: NoteNode[];
+    index: number;
     onNodeSelect?: () => void;
     onContextMenu: (e: React.MouseEvent, node: NoteNode) => void;
     isMobile?: boolean;
 }
 
-const TreeNode: React.FC<TreeNodeProps> = ({ node, level, onNodeSelect, onContextMenu, isMobile }) => {
-    const { selectNote, selectedNoteId, createNode, deleteNode, duplicateNode, renameNode, moveNode, openModal, language, expandedNodeIds, toggleNodeExpansion, setNodeExpansion, fetchTree } = useStore();
+const TreeNode: React.FC<TreeNodeProps> = ({ node, level, siblings, onNodeSelect, onContextMenu, isMobile }) => {
+    const { selectNote, selectedNoteId, createNode, deleteNode, duplicateNode, renameNode, reorderNodes, openModal, language, expandedNodeIds, toggleNodeExpansion, setNodeExpansion, fetchTree } = useStore();
     const t = translations[language];
-    const [isDragOver, setIsDragOver] = useState(false);
 
-    // Derived state from store
+    // Drag State: 'top' | 'bottom' | 'inside' | null
+    const [dragState, setDragState] = useState<'top' | 'bottom' | 'inside' | null>(null);
+
     const isOpen = expandedNodeIds.includes(node.id);
 
     const handleToggle = (e: React.MouseEvent) => {
         e.stopPropagation();
         toggleNodeExpansion(node.id);
-        // Refresh tree when interacting with folders to show new content
         fetchTree();
     };
 
@@ -55,7 +57,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, level, onNodeSelect, onContex
                 const title = val;
                 if (title) {
                     await createNode(node.id, type, title);
-                    setNodeExpansion(node.id, true); // Ensure expanded
+                    setNodeExpansion(node.id, true);
                 }
             }
         });
@@ -105,88 +107,187 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, level, onNodeSelect, onContex
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
+
+        const rect = e.currentTarget.getBoundingClientRect();
+        const y = e.clientY - rect.top;
+        const height = rect.height;
+
+        // Thresholds for drop zones
+        // Top 25%: Insert Before
+        // Bottom 25%: Insert After
+        // Middle 50%: Insert Inside (if folder)
+
+        let state: 'top' | 'bottom' | 'inside' | null = null;
+
         if (node.type === 'folder') {
-            setIsDragOver(true);
-            e.dataTransfer.dropEffect = 'move';
+            if (y < height * 0.25) state = 'top';
+            else if (y > height * 0.75) state = 'bottom';
+            else state = 'inside';
+        } else {
+            // Files can only be reordered, not contain items
+            if (y < height * 0.5) state = 'top';
+            else state = 'bottom';
         }
+
+        if (state !== dragState) {
+            setDragState(state);
+        }
+
+        e.dataTransfer.dropEffect = 'move';
     };
 
     const handleDragLeave = (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        setIsDragOver(false);
+        // Prevent flickering: Only clear state if leaving the container, not entering a child
+        if (e.currentTarget.contains(e.relatedTarget as Node)) {
+            return;
+        }
+        setDragState(null);
+    };
+
+    const getDropZone = (e: React.DragEvent) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const y = e.clientY - rect.top;
+        const height = rect.height;
+
+        if (node.type === 'folder') {
+            if (y < height * 0.25) return 'top';
+            if (y > height * 0.75) return 'bottom';
+            return 'inside';
+        }
+
+        // Files
+        return y < height * 0.5 ? 'top' : 'bottom';
     };
 
     const handleDrop = async (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        setIsDragOver(false);
 
-        if (node.type !== 'folder') return;
+        // Calculate state explicitly at drop time to avoid state staleness
+        const state = getDropZone(e);
+        setDragState(null); // Clear visual feedback
 
         try {
             const data = JSON.parse(e.dataTransfer.getData('application/json'));
             const draggedId = data.id;
 
-            if (draggedId === node.id) return; // Cannot drop on itself
+            if (draggedId === node.id) return;
 
-            await moveNode(draggedId, node.id);
-            setNodeExpansion(node.id, true); // Open folder to show dropped item
+            // Handle Nesting (Folder)
+            if (state === 'inside' && node.type === 'folder') {
+                const targetChildren = node.children || [];
+                const lastChild = targetChildren[targetChildren.length - 1];
+                const newPos = lastChild ? (lastChild.position || 0) + 65536 : 65536;
+
+                await reorderNodes([{
+                    id: draggedId,
+                    parentId: node.id,
+                    position: newPos
+                }]);
+                setNodeExpansion(node.id, true);
+                return;
+            }
+
+            // Re-partitioning Logic
+            const filteredSiblings = siblings.filter(n => n.id !== draggedId);
+            const targetIndex = filteredSiblings.findIndex(n => n.id === node.id);
+
+            if (targetIndex === -1) return;
+
+            let insertIndex = targetIndex;
+            if (state === 'bottom') {
+                insertIndex = targetIndex + 1;
+            }
+
+            const newOrderIds = [
+                ...filteredSiblings.slice(0, insertIndex).map(n => n.id),
+                draggedId,
+                ...filteredSiblings.slice(insertIndex).map(n => n.id)
+            ];
+
+            const updates = newOrderIds.map((id, idx) => ({
+                id,
+                parentId: node.parentId,
+                position: (idx + 1) * 65536
+            }));
+
+            await reorderNodes(updates);
+
         } catch (error) {
             console.error('Drop failed:', error);
         }
     };
 
     const isSelected = selectedNoteId === node.id;
-
-    // Responsive styles
     const itemPadding = isMobile ? 'p-3 my-1' : 'p-1';
     const textSize = isMobile ? 'text-base' : 'text-sm';
     const iconSize = isMobile ? 20 : 16;
     const actionIconSize = isMobile ? 16 : 12;
 
+    // Visual Indicators
+    const dropIndicatorClass = dragState === 'top' ? 'border-t-2 border-blue-500' :
+        dragState === 'bottom' ? 'border-b-2 border-blue-500' :
+            dragState === 'inside' ? 'bg-blue-100 dark:bg-blue-900/50 ring-2 ring-blue-500 rounded' : '';
+
     return (
         <div style={{ paddingLeft: `${level * 12}px` }}>
+            {/* Outer drop zone wrapper */}
             <div
-                className={`flex items-center ${itemPadding} hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer rounded ${isSelected ? 'bg-blue-100 dark:bg-blue-900' : ''} ${isDragOver ? 'bg-blue-200 dark:bg-blue-800 ring-2 ring-blue-500' : ''}`}
-                onClick={handleClick}
-                onContextMenu={handleContextMenu}
-                draggable
-                onDragStart={handleDragStart}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
+                className={`${dropIndicatorClass}`}
             >
-                <span onClick={handleToggle} className="mr-1 p-1">
-                    {node.type === 'folder' && (
-                        isOpen ? <ChevronDown size={iconSize} /> : <ChevronRight size={iconSize} />
-                    )}
-                    {node.type === 'note' && <span className="w-4" />}
-                </span>
+                {/* Inner draggable item */}
+                <div
+                    className={`flex items-center ${itemPadding} hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer rounded transition-all duration-150 ${isSelected ? 'bg-blue-100 dark:bg-blue-900' : ''}`}
+                    onClick={handleClick}
+                    onContextMenu={handleContextMenu}
+                    draggable
+                    onDragStart={handleDragStart}
+                >
+                    <span onClick={handleToggle} className="mr-1 p-1">
+                        {node.type === 'folder' && (
+                            isOpen ? <ChevronDown size={iconSize} /> : <ChevronRight size={iconSize} />
+                        )}
+                        {node.type === 'note' && <span className="w-4" />}
+                    </span>
 
-                {node.type === 'folder' ? <Folder size={iconSize} className="text-yellow-500 mr-2" /> : <FileText size={iconSize} className="text-blue-500 mr-2" />}
+                    {node.type === 'folder' ? <Folder size={iconSize} className="text-yellow-500 mr-2" /> : <FileText size={iconSize} className="text-blue-500 mr-2" />}
 
-                <span className={`flex-1 truncate ${textSize} select-none`}>{node.title}</span>
+                    <span className={`flex-1 truncate ${textSize} select-none`}>{node.title}</span>
 
-                <div className={`flex gap-2 ${isSelected ? 'opacity-100' : 'opacity-0 hover:opacity-100 group-hover:opacity-100'}`}>
-                    {node.type === 'folder' && (
-                        <>
-                            <button onClick={(e) => handleCreate(e, 'note')} title={t.sidebar.newNote}><Plus size={actionIconSize} /></button>
-                            <button onClick={(e) => handleCreate(e, 'folder')} title={t.sidebar.newFolder}><Folder size={actionIconSize} /></button>
-                        </>
-                    )}
-                    {node.type === 'note' && (
-                        <button onClick={handleDuplicate} title={t.sidebar.duplicate}><Copy size={actionIconSize} /></button>
-                    )}
-                    <button onClick={handleRename} title={t.sidebar.rename}><Edit2 size={actionIconSize} /></button>
-                    <button onClick={handleDelete} title={t.sidebar.delete}><Trash2 size={actionIconSize} className="text-red-500" /></button>
+                    <div className={`flex gap-2 ${isSelected ? 'opacity-100' : 'opacity-0 hover:opacity-100 group-hover:opacity-100'}`}>
+                        {node.type === 'folder' && (
+                            <>
+                                <button onClick={(e) => handleCreate(e, 'note')} title={t.sidebar.newNote}><Plus size={actionIconSize} /></button>
+                                <button onClick={(e) => handleCreate(e, 'folder')} title={t.sidebar.newFolder}><Folder size={actionIconSize} /></button>
+                            </>
+                        )}
+                        {node.type === 'note' && (
+                            <button onClick={handleDuplicate} title={t.sidebar.duplicate}><Copy size={actionIconSize} /></button>
+                        )}
+                        <button onClick={handleRename} title={t.sidebar.rename}><Edit2 size={actionIconSize} /></button>
+                        <button onClick={handleDelete} title={t.sidebar.delete}><Trash2 size={actionIconSize} className="text-red-500" /></button>
+                    </div>
                 </div>
             </div>
 
             {isOpen && node.children && (
                 <div>
-                    {node.children.map(child => (
-                        <TreeNode key={child.id} node={child} level={level + 1} onNodeSelect={onNodeSelect} onContextMenu={onContextMenu} isMobile={isMobile} />
+                    {node.children.map((child, idx) => (
+                        <TreeNode
+                            key={child.id}
+                            node={child}
+                            siblings={node.children!}
+                            index={idx}
+                            level={level + 1}
+                            onNodeSelect={onNodeSelect}
+                            onContextMenu={onContextMenu}
+                            isMobile={isMobile}
+                        />
                     ))}
                 </div>
             )}
@@ -200,44 +301,31 @@ interface TreeViewProps {
 }
 
 export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) => {
-    const { tree, createNode, openModal, moveNode, renameNode, deleteNode, duplicateNode, language, selectNote } = useStore();
+    const { tree, createNode, openModal, reorderNodes, sortNodes, renameNode, deleteNode, duplicateNode, language, selectNote } = useStore();
     const t = translations[language];
     const [isDragOverRoot, setIsDragOverRoot] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
-    // Search Logic
+    // Search Logic ... (Unchanged)
     const searchResults = useMemo(() => {
         if (!searchQuery.trim()) return [];
-
         const query = searchQuery.toLowerCase();
         const results: NoteNode[] = [];
-
         const searchNodes = (nodes: NoteNode[]) => {
             for (const node of nodes) {
-                const titleMatch = node.title.toLowerCase().includes(query);
-                const contentMatch = node.contentMarkdown?.toLowerCase().includes(query);
-
-                if (titleMatch || contentMatch) {
+                if (node.title.toLowerCase().includes(query) || node.contentMarkdown?.toLowerCase().includes(query)) {
                     results.push(node);
                 }
-
-                if (node.children) {
-                    searchNodes(node.children);
-                }
+                if (node.children) searchNodes(node.children);
             }
         };
-
         searchNodes(tree);
         return results;
     }, [searchQuery, tree]);
 
-
-    // Context Menu State
+    // Context Menu State ... (Unchanged)
     const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number; node: NoteNode | null }>({
-        visible: false,
-        x: 0,
-        y: 0,
-        node: null
+        visible: false, x: 0, y: 0, node: null
     });
 
     React.useEffect(() => {
@@ -247,37 +335,25 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
     }, []);
 
     const handleNodeContextMenu = (e: React.MouseEvent, node: NoteNode) => {
-        // Calculate safe position (keep menu within viewport)
         let x = e.clientX;
         let y = e.clientY;
-
-        // Simple bound check (approximate menu size)
         if (window.innerWidth - x < 200) x = window.innerWidth - 200;
         if (window.innerHeight - y < 250) y = window.innerHeight - 250;
-
-        setContextMenu({
-            visible: true,
-            x,
-            y,
-            node
-        });
+        setContextMenu({ visible: true, x, y, node });
     };
 
     const handleMenuAction = async (action: 'newInfo' | 'newFolder' | 'rename' | 'duplicate' | 'delete') => {
         const node = contextMenu.node;
         if (!node) return;
-
         setContextMenu(prev => ({ ...prev, visible: false }));
 
         switch (action) {
-            case 'newInfo': // Note
+            case 'newInfo':
                 openModal({
                     type: 'prompt',
                     title: t.sidebar.newNote,
                     message: 'Name:',
-                    onConfirm: async (val) => {
-                        if (val) await createNode(node.id, 'note', val as string);
-                    }
+                    onConfirm: async (val) => val && await createNode(node.id, 'note', val as string)
                 });
                 break;
             case 'newFolder':
@@ -285,9 +361,7 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
                     type: 'prompt',
                     title: t.sidebar.newFolder,
                     message: 'Name:',
-                    onConfirm: async (val) => {
-                        if (val) await createNode(node.id, 'folder', val as string);
-                    }
+                    onConfirm: async (val) => val && await createNode(node.id, 'folder', val as string)
                 });
                 break;
             case 'rename':
@@ -296,9 +370,7 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
                     title: t.sidebar.rename,
                     message: 'Name:',
                     inputValue: node.title,
-                    onConfirm: async (val) => {
-                        if (val) await renameNode(node.id, val as string);
-                    }
+                    onConfirm: async (val) => val && await renameNode(node.id, val as string)
                 });
                 break;
             case 'duplicate':
@@ -309,9 +381,7 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
                     type: 'confirm',
                     title: t.general.delete,
                     message: `Sind Sie sicher, dass Sie "${node.title}" löschen möchten?`,
-                    onConfirm: async () => {
-                        await deleteNode(node.id);
-                    }
+                    onConfirm: async () => await deleteNode(node.id)
                 });
                 break;
         }
@@ -322,17 +392,9 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
             type: 'prompt',
             title: `Neuen Stamm-${type === 'folder' ? 'Ordner' : 'Notiz'} erstellen`,
             message: 'Name:',
-            onConfirm: async (val) => {
-                if (typeof val !== 'string' || !val) return;
-                const title = val;
-                if (title) {
-                    await createNode(null, type, title);
-                }
-            }
+            onConfirm: async (val) => val && await createNode(null, type, val as string)
         });
     };
-
-    // ... (Root drag handlers unchanged)
 
     const handleDragOverRoot = (e: React.DragEvent) => {
         e.preventDefault();
@@ -344,6 +406,9 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
     const handleDragLeaveRoot = (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
+        if (e.currentTarget.contains(e.relatedTarget as Node)) {
+            return;
+        }
         setIsDragOverRoot(false);
     };
 
@@ -351,11 +416,21 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
         e.preventDefault();
         e.stopPropagation();
         setIsDragOverRoot(false);
-
         try {
             const data = JSON.parse(e.dataTransfer.getData('application/json'));
             const draggedId = data.id;
-            await moveNode(draggedId, null);
+
+            // Re-partition root nodes
+            const filteredRoot = tree.filter(n => n.id !== draggedId);
+            const newOrderIds = [...filteredRoot.map(n => n.id), draggedId];
+
+            const updates = newOrderIds.map((id, idx) => ({
+                id,
+                parentId: null,
+                position: (idx + 1) * 65536
+            }));
+
+            await reorderNodes(updates);
         } catch (error) {
             console.error('Drop to root failed:', error);
         }
@@ -369,7 +444,6 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
             onDrop={handleDropRoot}
         >
             <div className={`bg-gray-50 dark:bg-gray-800 ${isMobile ? 'p-4 border-b dark:border-gray-700' : ''}`}>
-                {/* Header Row - Matches Editor Status Bar (32px content + 1px border) */}
                 <div className={`flex justify-between items-center px-2 border-b dark:border-gray-700 ${isMobile ? 'mb-2' : 'h-[46px]'}`}>
                     <span className={`font-bold text-gray-600 dark:text-gray-300 ${isMobile ? 'text-base' : 'text-xs'}`}>
                         {t.sidebar.explorer}
@@ -389,10 +463,16 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
                         >
                             <Folder size={isMobile ? 20 : 14} />
                         </button>
+                        <button
+                            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+                            onClick={() => sortNodes(null)}
+                            title="Sortieren (A-Z)"
+                        >
+                            <ArrowUpDown size={isMobile ? 20 : 14} />
+                        </button>
                     </div>
                 </div>
 
-                {/* Search Row - Matches Enforced Toolbar Height (46px) */}
                 <div className={`flex items-center ${isMobile ? '' : 'h-[46px] px-2'} border-b dark:border-gray-700`}>
                     <div className="relative flex-1">
                         <input
@@ -409,7 +489,6 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
 
             <div className="flex-1 overflow-auto p-2">
                 {searchQuery.trim() ? (
-                    // Search Results List
                     <div className="flex flex-col gap-1">
                         {searchResults.length === 0 ? (
                             <div className="text-gray-500 text-xs italic p-2 text-center">Keine Ergebnisse</div>
@@ -430,7 +509,6 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
                                     <div className="flex flex-col overflow-hidden">
                                         <span className="text-sm truncate font-medium">{node.title}</span>
                                         <span className="text-[10px] text-gray-500 truncate">
-                                            {/* Show path or type or just 'Found in content' */}
                                             {node.contentMarkdown?.toLowerCase().includes(searchQuery.toLowerCase()) ? 'Treffer im Inhalt' : 'Treffer im Titel'}
                                         </span>
                                     </div>
@@ -439,14 +517,21 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
                         )}
                     </div>
                 ) : (
-                    // Standard Tree View
-                    tree.map(node => (
-                        <TreeNode key={node.id} node={node} level={0} onNodeSelect={onNodeSelect} onContextMenu={handleNodeContextMenu} isMobile={isMobile} />
+                    tree.map((node, i) => (
+                        <TreeNode
+                            key={node.id}
+                            node={node}
+                            siblings={tree}
+                            index={i}
+                            level={0}
+                            onNodeSelect={onNodeSelect}
+                            onContextMenu={handleNodeContextMenu}
+                            isMobile={isMobile}
+                        />
                     ))
                 )}
             </div>
 
-            {/* Context Menu Overlay */}
             {contextMenu.visible && contextMenu.node && (
                 <div
                     className="fixed z-50 bg-white dark:bg-gray-800 border dark:border-gray-700 shadow-xl rounded-lg py-1 w-48 text-sm"
