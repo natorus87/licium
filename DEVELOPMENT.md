@@ -61,20 +61,15 @@ This document serves as a "memory" for the AI agent (and developers) regarding t
 
 ### Server
 ```bash
-# Build
-sg docker -c "docker build --no-cache -t natorus87/licium-server ./server"
-
-# Push
-sg docker -c "docker push natorus87/licium-server"
+# Multi-Arch Build & Push (AMD64 + ARM64)
+sg docker -c "docker buildx build --platform linux/amd64,linux/arm64 -t natorus87/licium-server:latest --push ./server"
 ```
 
 ### Client (Frontend)
 ```bash
-# Build (No Cache recommended to ensure static assets update)
-sg docker -c "docker build --no-cache -t natorus87/licium-client ./client"
-
-# Push
-sg docker -c "docker push natorus87/licium-client"
+# Multi-Arch Build & Push (AMD64 + ARM64)
+# Note: --no-cache is often recommended for frontend to ensure clear asset hashing
+sg docker -c "docker buildx build --no-cache --platform linux/amd64,linux/arm64 -t natorus87/licium-client:latest --push ./client"
 ```
 
 ## 4. Deployment Options
@@ -107,13 +102,9 @@ kubectl apply -f k8s-conbro/
 When working with Kubernetes (Option B or C), simply restarting a Pod is not enough to apply code changes because the deployment pulls from a container registry.
 
 **Workflow for Code Updates:**
-1.  **Build** the new image (use `--no-cache` for static asset updates):
+1.  **Build & Push (Multi-Arch)**:
     ```bash
-    sg docker -c "docker build --no-cache -t natorus87/licium-client ./client"
-    ```
-2.  **Push** to the registry:
-    ```bash
-    sg docker -c "docker push natorus87/licium-client"
+    sg docker -c "docker buildx build --no-cache --platform linux/amd64,linux/arm64 -t natorus87/licium-client:latest --push ./client"
     ```
 3.  **Restart** the deployment (pulls new image):
     ```bash

@@ -1,5 +1,5 @@
 .gitlab-ci.yml
 k8s-conbro/
-DEVELOPMENT.md
+
 TODO.md
 VERSION_MANAGEMENT.md
