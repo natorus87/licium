@@ -3,6 +3,10 @@
   <h1>Licium – From Chaos to Order</h1>
 </div>
 
+> [!NOTE]  
+> **Project Realization**  
+> This project was realized using **Vibe-Coding** and **Antigravity by [@google](https://github.com/google)**.
+
 Licium is a smart, AI-powered note-taking application designed to bridge the gap between structured documentation, free-form writing, and artificial intelligence.
 
 #### The Story Behind It
@@ -16,9 +20,6 @@ The name also shares its roots with the English word *"to elicit"*—to draw out
 - **Structure via AI**: Simply dump your thoughts—the AI analyzes them and brings them into form.
 - **Research & Web Search**: Enrich your notes with information from the web without ever leaving the app.
 - **Chat with your Data (RAG)**: Thanks to an integrated RAG system (Retrieval-Augmented Generation), your knowledge base becomes intelligent. Ask questions about your own notes, and Licium elicits the answer from your accumulated data.
-
-> **Project Realization**
-> This project was realized using **Vibe-Coding** and **Antigravity by Google**.
 
 ---
 
