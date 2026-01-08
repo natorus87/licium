@@ -6,10 +6,10 @@
 Licium is a smart, AI-powered note-taking application designed to bridge the gap between structured documentation, free-form writing, and artificial intelligence.
 
 #### The Story Behind It
-Licium was born out of personal necessity. Developed as a solo project, the goal was simple yet ambitious: I wanted to eliminate my own information chaos. There was simply no software available that allowed me to capture information quickly and "messily," only to transform it into a clear structure afterwards using AI. So, I built it myself.
+Licium was born out of personal necessity. Developed as a solo project, the goal was simple yet ambitious: to eliminate personal information chaos. There was no software available that allowed capturing information quickly and "messily," only to transform it into a clear structure afterwards using AI. So, I built it myself.
 
 #### More Than Just Notes
-The name **Licium** (Latin for the "weaver’s thread") is its philosophy. The app weaves your loose thoughts into a cohesive network of knowledge. But Licium is more than just storage—it is an active partner in your thinking and research process.
+The name **Licium** (Latin for the "weaver's thread") embodies its philosophy: the app weaves your loose thoughts into a cohesive network of knowledge. Licium is more than just storage—it is an active partner in your thinking and research process.
 
 The name also shares its roots with the English word *"to elicit"*—to draw out or bring forth. Licium doesn't just store data; it extracts value from it:
 
@@ -19,26 +19,39 @@ The name also shares its roots with the English word *"to elicit"*—to draw out
 
 > **Project Realization**
 > This project was realized using **Vibe-Coding** and **Antigravity by Google**.
+
 ---
 
 > [!CAUTION]  
 > **Development Status: Beta**  
 > Licium is currently in active development. While it is stable for daily use, please be aware that bugs and unexpected behavior may occur. **Always back up your data.**  
 > 
-> **Editor Update**
+> **Editor Update**  
 > Licium now utilizes the `@licium` scoped editor packages (a maintained fork of Toast UI) to ensure stability and support modern features like Tailwind dark mode integration.
 
 ---
 
 ## Features
 
+### 🎨 Visual Showcase & Theming
+
+Licium features a clean, professional interface with automatic **Dark Mode** support. The application respects your system preferences by default (`prefers-color-scheme`) but also allows for manual toggling via the settings.
+
+<div align="center">
+  <img src="assets/overview_dark.png" width="48%" alt="Licium Dark Mode" />
+  <img src="assets/overview_light.png" width="48%" alt="Licium Light Mode" />
+  <p><em>Seamless switch between Dark and Light mode for comfortable day and night usage.</em></p>
+</div>
+
 ### 📝 Core Editor & Note Management
-- **WYSIWYG Markdown Editor**: Powered by the `@licium` editor (maintained fork), giving you a rich editing experience while maintaining full Markdown compatibility.
-- **Tree-Based Organization**: Organize your notes hierarchically with folders and files. Supports Drag-and-Drop functionality for intuitive restructuring.
+- **WYSIWYG Markdown Editor**: Powered by the `@licium` editor (maintained fork of Toast UI), giving you a rich editing experience while maintaining full Markdown compatibility.
+- **Tree-Based Organization**: Organize your notes hierarchically with folders and files. Supports **Drag-and-Drop** functionality for intuitive restructuring and reordering.
 - **Robust Persistence**: Notes are securely stored in a PostgreSQL database with a reliable saving mechanism that handles network latency and rapid switching.
 - **Image Handling**: Drag & drop or paste images directly into your notes. Includes a custom context menu for resizing (Small/Medium/Large).
 - **Multimedia Support**: YouTube links are automatically converted into inline, playable video widgets.
-- **Plugins**: Integrated support for Charts, UML diagrams (Mermaid-style), Text Alignment, and advanced table operations (merged cells).
+- **Plugins**: Integrated support for Charts, UML diagrams (Mermaid-style), Text Alignment, Details/Summary collapsible blocks, Emoji picker, and advanced table operations (merged cells).
+
+![Editor Features](assets/editor.png)
 
 ### 🤖 AI Integration
 - **Context-Aware Assistance**: Chat with your notes using your preferred LLM.
@@ -53,32 +66,7 @@ The name also shares its roots with the English word *"to elicit"*—to draw out
 - **Web Search Integration**: Uses **SearXNG** to provide the AI with real-time web access (privacy-focused metasearch).
 - **Voice Recording & Transcription**: Local, multilingual speech-to-text using **Whisper** (supports DE, EN, FR, IT, ES, NL).
 
-### 🎨 Visual Showcase & Theming
-
-Licium features a clean, professional interface with automatic **Dark Mode** support. The application respects your system preferences by default (`prefers-color-scheme`) but also allows for manual toggling via the settings.
-
-<div align="center">
-  <img src="assets/overview_dark.png" width="48%" alt="Licium Dark Mode" />
-  <img src="assets/overview_light.png" width="48%" alt="Licium Light Mode" />
-  <p><em>Seamless switch between Dark and Light mode for comfortable day and night usage.</em></p>
-</div>
-
-### 📝 Core Editor & Note Management
-- **WYSIWYG Markdown Editor**: Powered by the `@licium` editor (maintained fork), giving you a rich editing experience while maintaining full Markdown compatibility.
-- **Tree-Based Organization**: Organize your notes hierarchically with folders and files. Supports Drag-and-Drop functionality for intuitive restructuring.
-- **Robust Persistence**: Notes are securely stored in a PostgreSQL database with a reliable saving mechanism.
-
-![Editor Features](assets/editor.png)
-
-### 🤖 AI Integration
-- **Context-Aware Assistance**: Chat with your notes using your preferred LLM.
-- **Provider Agnostic**: Supports **OpenAI** (Cloud) and **Ollama** (Local LLM) out of the box.
-- **Voice Input**: Dictate prompts directly using the integrated Whisper speech-to-text.
-- **Smart Actions**: Built-in quick actions (Summarize, Rewrite, Structure, ELI5).
-- **Web Search Integration**: Uses **SearXNG** to provide the AI with real-time web access.
-
 ![AI Assistant Features](assets/ai_assistant.png)
-
 
 ### 🔐 Administration & Security
 - **User Management**: Admin dashboard to manage users, reset passwords, and change roles.
@@ -103,9 +91,10 @@ Licium features a clean, professional interface with automatic **Dark Mode** sup
 
 You can run Licium easily using Docker, Docker Compose, or Kubernetes.
 
-### Option 1: Docker Compose (Recommended for fast local setup)
+### Option 1: Docker Compose (Recommended for Local Setup)
 Using `docker-compose` is the easiest way to get the full stack (Frontend, Backend, Database) running.
-*Note: This setup relies on internal network security and does not implement the K8s-based Basic Auth.*
+
+> **Note**: This setup relies on internal network security and does not implement the K8s-based Basic Auth.
 
 1.  **Start the Stack**:
     ```bash
@@ -118,7 +107,7 @@ Using `docker-compose` is the easiest way to get the full stack (Frontend, Backe
     - **Draw.io**: http://localhost/drawio (via Nginx proxy)
     - **SearXNG**: http://localhost/search (via Nginx proxy)
 
-*Note: The setup uses `pgvector/pgvector:pg15`. For production, please update the credentials in `docker-compose.yml`.*
+> **Important**: The setup uses `pgvector/pgvector:pg15`. For production, please update the credentials in `docker-compose.yml`.
 
 ### Option 2: Kubernetes (Production)
 For a scalable production deployment, use the provided K8s manifests in `k8s/` (Template).
@@ -133,7 +122,7 @@ kubectl apply -f k8s/secrets.yaml
 kubectl apply -f k8s/
 ```
 
-### Option 4: Helm Chart (Advanced)
+### Option 3: Helm Chart (Advanced)
 For advanced Kubernetes deployments, use the provided Helm chart.
 
 1.  **Install Chart**:
@@ -144,8 +133,7 @@ For advanced Kubernetes deployments, use the provided Helm chart.
 2.  **Customize Values**:
     Edit `charts/licium/values.yaml` to configure domains (`licium.domain.local`), enabled features (`ingressRoute`, `persistence`), and resource limits.
 
-
-### Option 3: Manual Docker Run
+### Option 4: Manual Docker Run
 If you prefer running individual containers:
 
 1.  **Run Database**:
@@ -166,16 +154,18 @@ If you prefer running individual containers:
 3.  **Run Whisper (Optional)**:
     ```bash
     docker run -d -p 8000:8000 --name whisper \
-      -e WHISPER__MODEL=deepdml/faster-whisper-large-v3-turbo-ct2 -e WHISPER__COMPUTE_TYPE=int8 \
+      -e WHISPER__MODEL=deepdml/faster-whisper-large-v3-turbo-ct2 \
+      -e WHISPER__COMPUTE_TYPE=int8 \
       fedirz/faster-whisper-server:latest-cpu
     ```
 
-3.  **Run Frontend**:
+4.  **Run Frontend**:
     ```bash
-    docker run -d -p 8080:8080 --name licium-client \
+    docker run -d -p 8080:80 --name licium-client \
       natorus87/licium-client:latest
     ```
-    *Note: Without a custom network or Nginx config, the frontend might not reach the backend API correctly in this manual mode. Docker Compose is strongly recommended.*
+
+> **Note**: Without a custom network or Nginx config, the frontend might not reach the backend API correctly in this manual mode. Docker Compose is strongly recommended.
 
 ---
 
@@ -199,7 +189,7 @@ Go to **Settings → AI Connections** to set up your preferred LLM.
 If you deployed the Whisper container:
 - Go to **Settings → System Checks** (if available) or simply try recording an audio note.
 - **Note**: The first transcription might take a few seconds longer as the model initializes.
-- **Tip**: Ensure you have selected the correct input device in your browser globally.
+- **Tip**: Ensure you have selected the correct input device in your browser.
 
 ---
 
@@ -207,10 +197,10 @@ If you deployed the Whisper container:
 
 Licium is built on the shoulders of giants. A heartfelt thank you goes out to the incredible open-source projects and technologies that made this possible:
 
-*   **Google**: For the power of **Vibe-Coding**, **Antigravity**, and **Gemini**, which transformed the development of this project.
-*   **Toast UI**: For the excellent Markdown editor foundation.
-*   **SearXNG**: For enabling privacy-respecting, metasearch capabilities.
-*   **Draw.io (diagrams.net)**: For the powerful diagramming integration.
-*   **PostgreSQL**: For the robust database and `pgvector` extension.
-*   **OpenAI**: For the Whisper model architecture fueling our local transcription.
-*   **The Open Source Community**: To all the maintainers and contributors of the libraries, frameworks, and tools used in this stack (React, Node.js, and many more) — thank you.
+*   **[@google](https://github.com/google)**: For the power of **Vibe-Coding**, **Antigravity**, and **Gemini**, which transformed the development of this project.
+*   **[@nhn](https://github.com/nhn) (Toast UI)**: For the excellent Markdown editor foundation.
+*   **[@searxng](https://github.com/searxng)**: For enabling privacy-respecting, metasearch capabilities.
+*   **[@jgraph](https://github.com/jgraph) (Draw.io / diagrams.net)**: For the powerful diagramming integration.
+*   **[@postgres](https://github.com/postgres)**: For the robust database and `pgvector` extension.
+*   **[@openai](https://github.com/openai)**: For the Whisper model architecture fueling our local transcription.
+*   **The Open Source Community**: To all the maintainers and contributors of the libraries, frameworks, and tools used in this stack (React, Node.js, Vite, Tailwind, and many more) — thank you.
