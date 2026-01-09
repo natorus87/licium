@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.4] - 2026-01-09
+### Added
+- **Text highlighting**: Added support for highlighting text in the editor (`@licium/editor-plugin-highlight`).
+
 ## [0.9.3] - 2026-01-08
 
 ### Added

@@ -32,6 +32,7 @@ import colorSyntax from '@licium/editor-plugin-color-syntax';
 import details from '@licium/editor-plugin-details';
 import textAlignSimpel from '@licium/editor-plugin-text-align-simpel';
 import emoji from '@licium/editor-plugin-emoji';
+import highlight from '@licium/editor-plugin-highlight/dist/toastui-editor-plugin-highlight.js';
 
 import 'tui-color-picker/dist/tui-color-picker.css';
 import '@licium/editor-plugin-color-syntax/dist/toastui-editor-plugin-color-syntax.css';
@@ -39,6 +40,7 @@ import '@licium/editor-plugin-text-align-simpel/dist/toastui-editor-plugin-text-
 import '@licium/editor-plugin-emoji/dist/toastui-editor-plugin-emoji.css';
 import '@licium/editor-plugin-details/dist/toastui-editor-plugin-details.css';
 import '@licium/editor-plugin-table-merged-cell/dist/toastui-editor-plugin-table-merged-cell.css';
+import '@licium/editor-plugin-highlight/dist/toastui-editor-plugin-highlight.css';
 
 
 export const Editor: React.FC = () => {
@@ -1005,7 +1007,8 @@ export const Editor: React.FC = () => {
                         tableMergedCell,
                         details,
                         textAlignSimpel,
-                        emoji
+                        emoji,
+                        highlight
                     ]}
                     widgetRules={[
                         {

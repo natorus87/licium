@@ -50,7 +50,7 @@ Licium features a clean, professional interface with automatic **Dark Mode** sup
 - **Robust Persistence**: Notes are securely stored in a PostgreSQL database with a reliable saving mechanism that handles network latency and rapid switching.
 - **Image Handling**: Drag & drop or paste images directly into your notes. Includes a custom context menu for resizing (Small/Medium/Large).
 - **Multimedia Support**: YouTube links are automatically converted into inline, playable video widgets.
-- **Plugins**: Integrated support for Charts, UML diagrams (Mermaid-style), Text Alignment, Details/Summary collapsible blocks, Emoji picker, and advanced table operations (merged cells).
+- **Plugins**: Integrated support for Charts, UML diagrams (Mermaid-style), Text Alignment, Details/Summary collapsible blocks, Emoji picker, Text Highlighting, and advanced table operations (merged cells).
 
 ![Editor Features](assets/editor.png)
 
