@@ -244,7 +244,7 @@ The application is designed to be domain-agnostic but defaults to `licium.local`
 - **API Endpoint**: `/api/system/info` (authenticated) returns backend metadata
 
 ### Version Management
-- **Current Versions**: Frontend `0.9.4`, Backend `0.9.4`
+- **Current Versions**: Frontend `0.9.5`, Backend `0.9.5`
 - **Location**: Versions are stored in `package.json` files:
     - `client/package.json` → Frontend version
     - `server/package.json` → Backend version

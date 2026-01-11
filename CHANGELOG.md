@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.5] - 2026-01-11
+### Changed
+- **Editor**: Updated all `@licium` editor packages to version `3.2.14`.
+
 ## [0.9.4] - 2026-01-09
 ### Added
 - **Text highlighting**: Added support for highlighting text in the editor (`@licium/editor-plugin-highlight`).
