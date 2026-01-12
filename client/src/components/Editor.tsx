@@ -504,6 +504,7 @@ export const Editor: React.FC = () => {
                 // We will just setMarkdown for now.
 
                 if (currentEditorMarkdown !== selectedNoteContent) {
+                    isInternalUpdate.current = true;
                     editorInstance.setMarkdown(selectedNoteContent || '');
                 }
 

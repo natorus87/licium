@@ -126,9 +126,18 @@ The application is designed to be domain-agnostic but defaults to `licium.local`
 - **Draw.io Integration**:
     - Expects `DRAWIO_BASE_URL=/drawio`
     - In K8s/Compose, proxied via Nginx/Ingress to `/drawio`.
+    - **External Access**: Routed via `/draw` path prefix (rewritten to `/` for the container).
+    - **CSP**: Requires `connect-src 'self' data: blob:` to allow saving diagrams.
 - **SearXNG Integration**:
     - Expects `SEARXNG_BASE_URL` to match the external URL (e.g., `http://localhost/search` or `http://licium.local/search`).
     - API usage requires `&format=json`.
+
+### 7.1 Ingress Configuration (Traefik)
+- **TLS Termination**: Handled by external Load Balancer (Relianoid).
+- **EntryPoints**: Traefik listens on `web` (HTTP) port `8000`.
+- **IngressRoute**: Defines routing rules.
+    - Path `/draw`: Route to Draw.io service (requires `PathPrefix`).
+    - Path `/`: Route to Frontend service.
 
 ## 8. Features & Implementation Status
 - **Chat Modes**: Summary, Rewrite, Structure, ELI5, etc.
@@ -244,7 +253,7 @@ The application is designed to be domain-agnostic but defaults to `licium.local`
 - **API Endpoint**: `/api/system/info` (authenticated) returns backend metadata
 
 ### Version Management
-- **Current Versions**: Frontend `0.9.5`, Backend `0.9.5`
+- **Current Versions**: Frontend `0.9.10`, Backend `0.9.10`
 - **Location**: Versions are stored in `package.json` files:
     - `client/package.json` → Frontend version
     - `server/package.json` → Backend version
@@ -451,6 +460,13 @@ location = /apple-touch-icon.png {
 2.  **Forced Remount**: Added a `key={darkMode ? 'dark' : 'light'}` prop to the `ToastEditor` component. This forces React to unmount and remount the editor instance whenever the theme changes, ensuring a clean initialization with the correct style sheets.
 
 **Note on Toolbar Styling**: Attempts to override the Toast UI toolbar background color (to match the exact `gray-800` of the application header) using `!important` CSS rules are **discouraged**. Such overrides inevitably break the contrast or visibility of internal popups (like the Table Creation Grid) which inherit these styles. The default Toast UI Dark Theme (`#2f3235`) is accepted as a compromise for stability.
+
+### Editor Autosave Race Condition
+**Problem**: Notes content could be overwritten with empty data during drag-and-drop operations in the Tree View.
+**Root Cause**: The `Editor` component's `setMarkdown` method (used to sync local state with global store updates) triggered the `onChange` event listener. This listener then updated the store again, potentially triggering a debounced autosave with incomplete content if the editor was in the process of remounting or initializing.
+**Solution**: Implemented a recursion guard (`isInternalUpdate` ref) in `Editor.tsx`.
+-   When `setMarkdown` is called programmatically (to sync state), `isInternalUpdate` is set to `true`.
+-   The `onChange` handler checks this flag and aborts immediately if true, preventing the autosave loop.
 
 ### Mobile Settings Tab Overflow
 

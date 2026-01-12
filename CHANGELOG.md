@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.10] - 2026-01-12
+### Changed
+- **Server**: Updated Note Tree sort order (`Position ASC` -> `Title ASC`) to prevent notes from jumping to the top of the folder when edited.
+- **Client**: Bumped version to `0.9.10` to sync with server.
+
+### Fixed
+- **Draw.io Integration**: 
+  - Fixed proxy routing configuration to handle external path prefix `/draw` correctly.
+  - Resolved `404` errors by reverting IngressRoute to HTTP entrypoint behind external TLS load balancer.
+  - Fixed "Refused to connect" errors by updating Content Security Policy (CSP) to allow `data:` and `blob:` sources.
+- **Data Loss**: Fixed a critical race condition in the Editor where autosave could overwrite note content with empty data during drag-and-drop operations.
+
 ## [0.9.5] - 2026-01-11
 ### Changed
 - **Editor**: Updated all `@licium` editor packages to version `3.2.14`.

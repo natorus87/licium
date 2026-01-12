@@ -294,7 +294,7 @@ router.get('/tree', requireAuth, async (req, res) => {
 
     // Get all notes for user (Sort by position, then by updated_at)
     const result = await query(
-        'SELECT id, parent_id, type, title, content_markdown, created_at, updated_at, position FROM notes WHERE user_id = $1 ORDER BY position ASC, updated_at DESC',
+        'SELECT id, parent_id, type, title, content_markdown, created_at, updated_at, position FROM notes WHERE user_id = $1 ORDER BY position ASC, title ASC',
         [userId]
     );
 
@@ -952,11 +952,18 @@ router.get('/system/info', requireAuth, async (req, res) => {
 // ==================== Proxies ====================
 
 // Proxy for Draw.io (Internal Access to bypass Basic Auth)
-// Using regex to match both /api/drawio and /api/drawio/whatever
-router.all(/\/api\/drawio.*/, requireAuth, async (req, res) => {
+// Router is mounted at /api, so req.url starts with /drawio
+router.all(/\/drawio.*/, requireAuth, async (req, res) => {
     const drawioUrl = 'http://drawio:8080'; // Internal K8s Service URL
-    // Remove /api/drawio prefix to get the path for Draw.io
-    const path = req.url.replace('/api/drawio', '');
+
+    // Normalize path: ensure /drawio has trailing slash to avoid redirect
+    // Without trailing slash, relative URLs in HTML resolve incorrectly
+    let path = req.url;
+    if (path === '/drawio' || path.startsWith('/drawio?')) {
+        // Insert trailing slash before query string (if any)
+        path = path.replace('/drawio', '/drawio/');
+    }
+
     const targetUrl = `${drawioUrl}${path}`;
 
     try {
@@ -972,6 +979,13 @@ router.all(/\/api\/drawio.*/, requireAuth, async (req, res) => {
             responseType: 'stream',
             validateStatus: () => true // Forward all status codes
         });
+
+        // Rewrite Location header if present to keep client inside /api/drawio proxy path
+        // The container returns location starting with /drawio (e.g. /drawio/)
+        // We need to map this to /api/drawio/
+        if (response.headers.location && response.headers.location.startsWith('/drawio')) {
+            response.headers.location = response.headers.location.replace('/drawio', '/api/drawio');
+        }
 
         res.status(response.status);
         res.set(response.headers);

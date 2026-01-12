@@ -218,7 +218,7 @@ export const useStore = create<AppState>((set, get) => ({
     selectedNoteTitle: null,
     chatMessages: [],
     settings: initialSettings,
-    drawioSettings: JSON.parse(localStorage.getItem('drawio_settings') || '{"provider":"local","localUrl":"/api/drawio"}'),
+    drawioSettings: JSON.parse(localStorage.getItem('drawio_settings') || '{"provider":"local","localUrl":"/draw"}'),
     setDrawioSettings: (newSettings) => {
         set({ drawioSettings: newSettings });
         localStorage.setItem('drawio_settings', JSON.stringify(newSettings));
