@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.11] - 2026-01-14
+### Added
+- **Default LLM**: Added option in Settings to select a specific "Default" (Standard) LLM provider. This provider will be automatically selected when starting a new chat.
+- **Font Unification**: Unified font sizes across the application (Editor 14px, Explorer 14px) for a more consistent look.
+
+### Fixed
+- **Settings Persistence**: Fixed an issue where the Default Ollama provider would reappear after deletion.
+  - *Note*: The system now strictly respects user deletion of default providers (`default-ollama`, `default-openai`, `default-embeddings`).
+- **Draw.io**:
+  - Fixed 404/405 errors by correcting the proxy path rewriting.
+  - Fixed CSP issues allowing `data:` and `blob:` schemes for saving diagrams.
+
 ## [0.9.10] - 2026-01-12
 ### Changed
 - **Server**: Updated Note Tree sort order (`Position ASC` -> `Title ASC`) to prevent notes from jumping to the top of the folder when edited.

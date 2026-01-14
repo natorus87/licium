@@ -57,6 +57,7 @@ Licium features a clean, professional interface with automatic **Dark Mode** sup
 ### 🤖 AI Integration
 - **Context-Aware Assistance**: Chat with your notes using your preferred LLM.
 - **Provider Agnostic**: Supports **OpenAI** (Cloud) and **Ollama** (Local LLM) out of the box.
+- **Default Model**: Select your preferred "Standard" model deeply in settings to be used for all new chats.
 - **Voice Input**: Dictate prompts directly using the integrated Whisper speech-to-text.
 - **Smart Actions**: Built-in quick actions to:
     - **Summarize** long texts.

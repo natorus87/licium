@@ -342,3 +342,20 @@ body,
 .dark .toastui-editor-contents li {
   color: #e5e7eb;
 }
+
+/* Unify Editor Font Size with Explorer */
+/* Explorer uses text-base (16px) on mobile and text-sm (14px) on desktop */
+.toastui-editor-contents,
+.ProseMirror,
+.CodeMirror {
+  @apply text-base md:text-sm !important;
+  font-family: inherit;
+  /* Ensure it inherits app font (Inter/etc) */
+}
+
+/* Adjust line-height for better readability at 14px */
+.toastui-editor-contents,
+.ProseMirror,
+.CodeMirror {
+  line-height: 1.6 !important;
+}

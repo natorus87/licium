@@ -757,7 +757,12 @@ export const useStore = create<AppState>((set, get) => ({
 
                         // Merge missing default providers (e.g. new audio provider)
                         const currentProviderIds = new Set(newSettings.providers.map((p: any) => p.id));
-                        const missingDefaults = defaultProviders.filter(dp => !currentProviderIds.has(dp.id));
+                        const missingDefaults = defaultProviders.filter(dp =>
+                            !currentProviderIds.has(dp.id) &&
+                            // Only allow auto-adding specific new defaults (like whisper). 
+                            // Do NOT auto-add 'default-ollama', 'default-openai', or 'default-embeddings' if the user deleted them.
+                            (dp.id === 'default-whisper')
+                        );
 
                         if (missingDefaults.length > 0) {
                             newSettings.providers = [...newSettings.providers, ...missingDefaults];

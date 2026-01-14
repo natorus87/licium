@@ -210,7 +210,9 @@ export const translations = {
                 privacyExternal: 'Extern (Öffentlich/Cloud)',
                 privacyWarning: 'Externes AI-Modell (Datenschutz-Warnung)',
                 localMode: 'Lokaler AI-Modus',
-                saveGlobal: 'Globale Einstellungen speichern'
+                saveGlobal: 'Globale Einstellungen speichern',
+                active: 'Standard',
+                setDefault: 'Als Standard setzen'
             },
 
             userManagement: {
@@ -465,7 +467,9 @@ export const translations = {
                 privacyExternal: 'External (Public/Cloud)',
                 privacyWarning: 'External AI Model (Privacy Warning)',
                 localMode: 'Local AI Mode',
-                saveGlobal: 'Save Global Settings'
+                saveGlobal: 'Save Global Settings',
+                active: 'Default',
+                setDefault: 'Set Default'
             },
 
             userManagement: {
@@ -720,7 +724,9 @@ export const translations = {
                 privacyExternal: 'Externe (Public/Cloud)',
                 privacyWarning: 'Modèle IA Externe (Attention)',
                 localMode: 'Mode IA Local',
-                saveGlobal: 'Enregistrer les paramètres globaux'
+                saveGlobal: 'Enregistrer les paramètres globaux',
+                active: 'Par défaut',
+                setDefault: 'Définir par défaut'
             },
 
             userManagement: {
@@ -975,7 +981,9 @@ export const translations = {
                 privacyExternal: 'Esterno (Pubblico/Cloud)',
                 privacyWarning: 'Modello AI Esterno (Attenzione)',
                 localMode: 'Modalità AI Locale',
-                saveGlobal: 'Salva Impostazioni Globali'
+                saveGlobal: 'Salva Impostazioni Globali',
+                active: 'Predefinito',
+                setDefault: 'Imposta Predefinito'
             },
 
             userManagement: {
@@ -1230,7 +1238,9 @@ export const translations = {
                 privacyExternal: 'Externo (Público/Cloud)',
                 privacyWarning: 'Modelo IA Externo (Advertencia)',
                 localMode: 'Modo IA Local',
-                saveGlobal: 'Guardar Configuración Global'
+                saveGlobal: 'Guardar Configuración Global',
+                active: 'Predeterminado',
+                setDefault: 'Establecer Predeterminado'
             },
 
             userManagement: {
@@ -1485,7 +1495,9 @@ export const translations = {
                 privacyExternal: 'Extern (Publiek/Cloud)',
                 privacyWarning: 'Extern AI Model (Privacy Waarschuwing)',
                 localMode: 'Lokale AI-modus',
-                saveGlobal: 'Globale instellingen opslaan'
+                saveGlobal: 'Sla algemene instellingen op',
+                active: 'Standaard',
+                setDefault: 'Stel in als standaard',
             },
 
             userManagement: {

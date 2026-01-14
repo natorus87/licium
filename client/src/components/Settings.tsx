@@ -16,6 +16,7 @@ export const Settings: React.FC = () => {
 
     const t = translations[language];
     const [activeTab, setActiveTab] = useState<'general' | 'llm' | 'embeddings' | 'tools' | 'users' | 'info'>('general');
+    const [localActiveProviderId, setLocalActiveProviderId] = useState('');
     const [localProviders, setLocalProviders] = useState<LLMProvider[]>([]);
     const [localSearxngUrl, setLocalSearxngUrl] = useState('');
     const [systemInfo, setSystemInfo] = useState<any>(null);
@@ -27,6 +28,7 @@ export const Settings: React.FC = () => {
             hasEditedRef.current = false;
             fetchGlobalSettings();
             setLocalProviders(settings.providers);
+            setLocalActiveProviderId(settings.activeProviderId); // Initialize with current active
             setLocalSearxngUrl(settings.searxngUrl || '');
             // Fetch system info when opening settings
             fetchSystemInfo();
@@ -39,9 +41,10 @@ export const Settings: React.FC = () => {
     useEffect(() => {
         if (isSettingsOpen && !hasEditedRef.current && settings.providers.length > 0) {
             setLocalProviders(settings.providers);
+            setLocalActiveProviderId(settings.activeProviderId); // Sync if global updates
             setLocalSearxngUrl(settings.searxngUrl || '');
         }
-    }, [isSettingsOpen, settings.providers, settings.searxngUrl]);
+    }, [isSettingsOpen, settings.providers, settings.activeProviderId, settings.searxngUrl]);
 
     const [saveStatus, setSaveStatus] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
 
@@ -50,7 +53,7 @@ export const Settings: React.FC = () => {
     const handleSave = async () => {
         if (user?.role === 'admin') {
             const configToSave = {
-                activeProviderId: settings.activeProviderId,
+                activeProviderId: localActiveProviderId || settings.activeProviderId, // Use local selection
                 embeddingProviderId: settings.embeddingProviderId || settings.activeProviderId,
                 searxngUrl: localSearxngUrl,
                 providers: localProviders
@@ -67,11 +70,7 @@ export const Settings: React.FC = () => {
             setSaveStatus({ message: 'Admin required', type: 'error' });
             setTimeout(() => setSaveStatus(null), 3000);
         }
-        // toggleSettings(); // Remove this if we want to show the message inside the modal
-        // The user wants the message "from the website", so inline is best.
-        // But if I keep it open, they might want to close it manually.
-        // Let's close it after a delay OR just show the message and let them close.
-        // I'll keep the modal open so they see the message.
+        // toggleSettings();
     };
 
     const handlePasswordReset = () => {
@@ -266,12 +265,34 @@ export const Settings: React.FC = () => {
 
                                 {localProviders.filter(p => !p.category || p.category === 'chat').map((provider) => (
                                     <div key={provider.id} className="border dark:border-gray-700 rounded-lg p-4 space-y-4 relative mb-4">
-                                        <div className="absolute top-4 right-4">
+                                        <div className="absolute top-4 right-4 flex items-center gap-2">
+                                            {/* Default Toggle */}
+                                            <button
+                                                onClick={() => {
+                                                    setLocalActiveProviderId(provider.id);
+                                                    hasEditedRef.current = true;
+                                                }}
+                                                className={`px-2 py-1 text-xs rounded font-medium border ${localActiveProviderId === provider.id
+                                                    ? 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900 dark:text-green-200 dark:border-green-800'
+                                                    : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600'
+                                                    }`}
+                                                disabled={!isAdmin}
+                                                title={localActiveProviderId === provider.id ? "Currently Active" : "Set as Default"}
+                                            >
+                                                {localActiveProviderId === provider.id ? `✓ ${t.settings.labels.active || 'Standard'}` : (t.settings.labels.setDefault || 'Set Default')}
+                                            </button>
+
                                             <button
                                                 onClick={() => {
                                                     if (confirm(t.settings.labels.deleteProvider + '?')) {
                                                         const newProviders = localProviders.filter(p => p.id !== provider.id);
                                                         setLocalProviders(newProviders);
+                                                        // Reset active if deleted
+                                                        if (localActiveProviderId === provider.id) {
+                                                            const remaining = newProviders.filter(p => !p.category || p.category === 'chat');
+                                                            if (remaining.length > 0) setLocalActiveProviderId(remaining[0].id);
+                                                            else setLocalActiveProviderId('');
+                                                        }
                                                         hasEditedRef.current = true;
                                                     }
                                                 }}

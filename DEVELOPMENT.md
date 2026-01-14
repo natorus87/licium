@@ -151,6 +151,7 @@ The application is designed to be domain-agnostic but defaults to `licium.local`
     - **OpenAI**: Requires API Key, defaults to `gpt-4o`.
     - **Ollama**: Local AI (Privacy-focused), defaults to `llama3`.
     - **Custom**: Support for generic OpenAI-compatible endpoints.
+    - **Default Selection**: Users can explicitly set a "Standard" (Default) provider in Settings. This selection (`localActiveProviderId`) is persisted in `global_settings` and overrides the default "first-in-list" behavior.
 - **Privacy Mode**: Explicit visibility into data flow (Local vs. External) with UI warnings.
 - **UI Enhancements**:
     - **Smart Labels**: Chat history displays concise labels (e.g., "Summarize") instead of full prompt text. Full text available via tooltip.
@@ -505,6 +506,24 @@ If the primary registry is down, you can use `ttl.sh` (an ephemeral, anonymous, 
 -   Verify `k8s-conbro/frontend.yaml` `image` field is `natorus87/licium-client:latest`.
 -   Ensure `imagePullPolicy: Always` is set.
 -   Run `kubectl rollout restart deployment frontend -n licium`.
+
+### Kubernetes Deployment Not Updating
+**Problem**: After pushing a new image to Docker Hub, the application (`kubectl rollout restart`) still serves old code.
+**Root Cause**:
+1.  **Image Tag**: Using `latest` without `imagePullPolicy: Always` causes Kubernetes to use the cached local image.
+2.  **Manifest Drift**: The deployment manifest (`k8s-conbro/frontend.yaml`) might still be pointing to a temporary debug image (e.g., `ttl.sh/...`) instead of the official registry.
+**Solution**:
+-   Verify `k8s-conbro/frontend.yaml` `image` field is `natorus87/licium-client:latest`.
+-   Ensure `imagePullPolicy: Always` is set.
+-   Run `kubectl rollout restart deployment frontend -n licium`.
+
+### Default Settings & Persistence (Ollama Deletion)
+**Problem**: Users deleted the default "Ollama" provider, but it reappeared after a page reload.
+**Root Cause**: The `fetchGlobalSettings` logic in `store.ts` contained a safety fallback that aggressively restored *missing* default providers (`default-ollama`, `default-openai`, `default-embeddings`) if they weren't found in the response, assuming they were accidentally missing.
+**Solution**: 
+-   Updated `fetchGlobalSettings` to EXCLUDE these specific IDs from the restoration logic.
+-   The only provider that is still auto-restored if missing is `default-whisper` (as it's critical for audio).
+-   **Lesson**: Do not implement "safety nets" for user-deletable content without checking if the user *intentionally* deleted it (or just rely on the database state).
 
 ## 10. Infrastructure Security
 The application relies on Kubernetes primitives for security rather than application-level user tokens.
