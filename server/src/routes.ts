@@ -346,17 +346,49 @@ router.put('/notes/reorder', requireAuth, async (req, res) => {
         return res.status(400).json({ error: 'Invalid updates format' });
     }
 
+    const client = await (await import('./db')).getDb().connect();
+
     try {
+        await client.query('BEGIN');
+
+        // 1. Pre-fetch structure for cycle detection if any parentId is changing
+        // Optimization: Only fetch if we detect a parent change in the batch?
+        // For reorder, usually we are just changing positions, but drag-drop might change parent.
+
+        const allNotesResult = await client.query('SELECT id, parent_id FROM notes WHERE user_id = $1', [userId]);
+        const nodeMap = new Map<string, string | null>();
+        allNotesResult.rows.forEach(row => nodeMap.set(row.id, row.parent_id));
+
         for (const update of updates) {
-            await query(
+            // Cycle Check
+            let currentParentId = update.parentId;
+
+            // Check if moving into itself or its descendants
+            // We traverse up from the NEW parent. If we hit the node being moved, it's a cycle.
+            while (currentParentId) {
+                if (currentParentId === update.id) {
+                    throw new Error(`Cycle detected: Cannot move ${update.id} into its own descendant.`);
+                }
+                currentParentId = nodeMap.get(currentParentId) || null;
+            }
+
+            await client.query(
                 'UPDATE notes SET position = $1, parent_id = $2 WHERE id = $3 AND user_id = $4',
                 [update.position, update.parentId || null, update.id, userId]
             );
+
+            // Update map for next iteration in case multiple moves affect each other
+            nodeMap.set(update.id, update.parentId || null);
         }
+
+        await client.query('COMMIT');
         res.json({ message: 'Updated' });
-    } catch (e) {
+    } catch (e: any) {
+        await client.query('ROLLBACK');
         console.error("Reorder failed", e);
-        res.status(500).json({ error: 'Reorder failed' });
+        res.status(500).json({ error: e.message || 'Reorder failed' });
+    } finally {
+        client.release();
     }
 });
 
@@ -435,48 +467,61 @@ router.put('/notes/:id', requireAuth, async (req, res) => {
     const { id } = req.params;
     const userId = req.session.userId;
 
-    // Version History: Before updating, save current state
+    const client = await (await import('./db')).getDb().connect();
+
     try {
-        const currentNoteResult = await query('SELECT title, content_markdown FROM notes WHERE id = $1 AND user_id = $2', [id, userId]);
-        if (currentNoteResult.rows.length > 0) {
-            const currentNote = currentNoteResult.rows[0];
+        await client.query('BEGIN');
 
-            // Only save version if content is changing (simple check)
-            if (content !== undefined && content !== currentNote.content_markdown) {
-                // 1. Save current version
-                await query(
-                    'INSERT INTO note_versions (note_id, user_id, title, content_markdown) VALUES ($1, $2, $3, $4)',
-                    [id, userId, currentNote.title, currentNote.content_markdown]
-                );
+        // Version History: Before updating, save current state
+        try {
+            const currentNoteResult = await client.query('SELECT title, content_markdown FROM notes WHERE id = $1 AND user_id = $2', [id, userId]);
+            if (currentNoteResult.rows.length > 0) {
+                const currentNote = currentNoteResult.rows[0];
 
-                // 2. Prune old versions (Max 10 per note)
-                await query(`
-                    DELETE FROM note_versions
-                    WHERE id IN (
-                        SELECT id FROM note_versions
-                        WHERE note_id = $1
-                        ORDER BY created_at DESC
-                        OFFSET 10
-                    )
-                `, [id]);
+                // Only save version if content is changing (simple check)
+                if (content !== undefined && content !== currentNote.content_markdown) {
+                    // 1. Save current version
+                    await client.query(
+                        'INSERT INTO note_versions (note_id, user_id, title, content_markdown) VALUES ($1, $2, $3, $4)',
+                        [id, userId, currentNote.title, currentNote.content_markdown]
+                    );
+
+                    // 2. Prune old versions (Max 10 per note)
+                    await client.query(`
+                        DELETE FROM note_versions
+                        WHERE id IN (
+                            SELECT id FROM note_versions
+                            WHERE note_id = $1
+                            ORDER BY created_at DESC
+                            OFFSET 10
+                        )
+                    `, [id]);
+                }
             }
+        } catch (err) {
+            console.error("Failed to save version history:", err);
+            throw new Error("Failed to save version history. Update aborted to prevent data loss.");
         }
-    } catch (err) {
-        console.error("Failed to save version history:", err);
-        // Continue with update even if versioning fails (non-blocking)
-    }
 
-    if (title !== undefined) {
-        await query('UPDATE notes SET title = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND user_id = $3', [title, id, userId]);
-    }
-    if (content !== undefined) {
-        await query('UPDATE notes SET content_markdown = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND user_id = $3', [content, id, userId]);
+        if (title !== undefined) {
+            await client.query('UPDATE notes SET title = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND user_id = $3', [title, id, userId]);
+        }
+        if (content !== undefined) {
+            await client.query('UPDATE notes SET content_markdown = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND user_id = $3', [content, id, userId]);
 
-        // Trigger background embedding update
-        // We don't await this to keep UI snappy
-        updateNoteEmbeddings(id, content);
+            // Trigger background embedding update
+            updateNoteEmbeddings(id, content);
+        }
+
+        await client.query('COMMIT');
+        res.json({ message: 'Updated' });
+    } catch (e: any) {
+        await client.query('ROLLBACK');
+        console.error("Update note failed:", e);
+        res.status(500).json({ error: e.message || 'Update failed' });
+    } finally {
+        client.release();
     }
-    res.json({ message: 'Updated' });
 });
 
 router.get('/notes/:id', requireAuth, async (req, res) => {

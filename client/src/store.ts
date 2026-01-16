@@ -15,7 +15,7 @@ interface AppState {
 
     tree: NoteNode[];
     selectedNoteId: string | null;
-    selectedNoteContent: string;
+    selectedNoteContent: string | null;
     selectedNoteTitle: string | null;
     chatMessages: ChatMessage[];
     settings: LLMSettings;
@@ -44,8 +44,6 @@ interface AppState {
     // UI State
     isSidebarOpen: boolean;
     setIsSidebarOpen: (isOpen: boolean) => void;
-
-    // ... (rest of interface)
 
     // Auth Actions
     checkAuth: () => Promise<void>;
@@ -162,7 +160,7 @@ const defaultProviders: LLMProvider[] = [
     {
         id: 'default-whisper',
         name: 'Local Whisper',
-        type: 'custom', // Treating local whisper as a custom/internal type for consistency
+        type: 'custom',
         baseUrl: 'http://whisper:8000/v1/audio/transcriptions',
         model: 'deepdml/faster-whisper-large-v3-turbo-ct2',
         privacy: 'local',
@@ -178,13 +176,8 @@ const defaultSettings: LLMSettings = {
     providers: defaultProviders
 };
 
-
-
-// Settings are now loaded strictly from the backend to protect API Keys.
-// LocalStorage is no longer used for sensitive settings.
 const initialSettings = defaultSettings;
 
-// Load custom prompts
 const savedPrompts = localStorage.getItem('custom_prompts');
 let initialPrompts: { label: string, prompt: string }[] = [];
 try {
@@ -195,7 +188,6 @@ try {
     console.error("Failed to parse custom prompts", e);
 }
 
-// Load expanded nodes
 const savedExpandedNodes = localStorage.getItem('expanded_nodes');
 let initialExpandedNodes: string[] = [];
 try {
@@ -214,7 +206,7 @@ export const useStore = create<AppState>((set, get) => ({
 
     tree: [],
     selectedNoteId: null,
-    selectedNoteContent: '',
+    selectedNoteContent: null,
     selectedNoteTitle: null,
     chatMessages: [],
     settings: initialSettings,
@@ -252,33 +244,9 @@ export const useStore = create<AppState>((set, get) => ({
         localStorage.setItem('expanded_nodes', JSON.stringify(newExpanded));
     },
     expandPathToNode: (nodeId) => {
-        // This requires traversing the tree to find parents. 
-        // Since the tree structure is recursive, it's a bit complex to find parents without a parent map or search.
-        // For now, we'll rely on the components to handle expansion when needed, 
-        // or implement a helper if strictly necessary.
-        // Given the requirement is mostly about "remembering" state, the toggle/set actions are primary.
-        // However, we can implement a basic search if tree is available.
         const { tree, expandedNodeIds } = get();
         const path: string[] = [];
 
-        const findPath = (nodes: NoteNode[], targetId: string, currentPath: string[]): boolean => {
-            for (const node of nodes) {
-                if (node.id === targetId) {
-                    return true;
-                }
-                if (node.children) {
-                    if (findPath(node.children, targetId, [...currentPath, node.id])) {
-                        path.push(node.id); // Add current node as it is a parent
-                        // Note: The recursive logic above pushes *after* returning, so order might be child-first.
-                        // Actually, let's simplify: pass currentPath down. If found, copy currentPath to outer `path`.
-                        return true;
-                    }
-                }
-            }
-            return false;
-        };
-
-        // Correct implementation of findPath to populating `path`
         const search = (nodes: NoteNode[], targetId: string, parents: string[]): boolean => {
             for (const node of nodes) {
                 if (node.id === targetId) {
@@ -294,7 +262,6 @@ export const useStore = create<AppState>((set, get) => ({
 
         search(tree, nodeId, []);
 
-        // Merge and save
         const newExpanded = Array.from(new Set([...expandedNodeIds, ...path]));
         set({ expandedNodeIds: newExpanded });
         localStorage.setItem('expanded_nodes', JSON.stringify(newExpanded));
@@ -330,10 +297,9 @@ export const useStore = create<AppState>((set, get) => ({
         try {
             const res = await axios.get(`${API_URL}/me`, { withCredentials: true });
             set({ user: res.data, isAuthenticated: true, isCheckingAuth: false });
-            // Fetch initial data
             get().fetchTree();
             get().fetchGlobalSettings();
-            get().fetchCustomPrompts(); // Sync prompts
+            get().fetchCustomPrompts();
             get().fetchRegistrationStatus();
         } catch (error) {
             set({ user: null, isAuthenticated: false, isCheckingAuth: false });
@@ -346,7 +312,7 @@ export const useStore = create<AppState>((set, get) => ({
             set({ user: res.data, isAuthenticated: true });
             get().fetchTree();
             get().fetchGlobalSettings();
-            get().fetchCustomPrompts(); // Sync prompts
+            get().fetchCustomPrompts();
             get().fetchRegistrationStatus();
             return true;
         } catch (error) {
@@ -386,13 +352,11 @@ export const useStore = create<AppState>((set, get) => ({
         if (node.type === 'note') {
             set({
                 selectedNoteId: node.id,
-                selectedNoteContent: node.contentMarkdown || '',
+                selectedNoteContent: null,
                 selectedNoteTitle: node.title
             });
 
-            // Trigger async fetch to get latest content (Sync Fix)
             get().fetchNoteContent(node.id);
-            // Trigger tree fetch to ensure list is up to date (User Request for iOS PWA)
             get().fetchTree();
         }
     },
@@ -400,20 +364,21 @@ export const useStore = create<AppState>((set, get) => ({
     fetchNoteContent: async (id: string) => {
         try {
             const res = await axios.get(`${API_URL}/notes/${id}`, { withCredentials: true });
-            if (res.data && typeof res.data.content === 'string') {
-                // Only update if the selected note is still the same (avoid race conditions)
-                if (get().selectedNoteId === id) {
-                    set({ selectedNoteContent: res.data.content });
+            if (res.data) {
+                const content = res.data.content_markdown === null ? '' : res.data.content_markdown;
+                if (typeof content === 'string') {
+                    if (get().selectedNoteId === id) {
+                        set({ selectedNoteContent: content });
 
-                    // Also update the tree model to keep it in sync
-                    const updateTree = (nodes: NoteNode[]): NoteNode[] => {
-                        return nodes.map(node => {
-                            if (node.id === id) return { ...node, contentMarkdown: res.data.content };
-                            if (node.children) return { ...node, children: updateTree(node.children) };
-                            return node;
-                        });
-                    };
-                    set(state => ({ tree: updateTree(state.tree) }));
+                        const updateTree = (nodes: NoteNode[]): NoteNode[] => {
+                            return nodes.map(node => {
+                                if (node.id === id) return { ...node, contentMarkdown: content };
+                                if (node.children) return { ...node, children: updateTree(node.children) };
+                                return node;
+                            });
+                        };
+                        set(state => ({ tree: updateTree(state.tree) }));
+                    }
                 }
             }
         } catch (error) {
@@ -431,16 +396,19 @@ export const useStore = create<AppState>((set, get) => ({
         const targetContent = content !== undefined ? content : selectedNoteContent;
 
         if (!targetId) return;
+        if (targetContent === null) {
+            console.warn("Skipping save: Content not loaded (null)");
+            return;
+        }
 
         set({ isSaving: true, saveError: null });
         try {
             await axios.put(`${API_URL}/notes/${targetId}`, { content: targetContent }, { withCredentials: true });
 
-            // Helper to recursively update the tree
             const updateNodeInTree = (nodes: NoteNode[]): NoteNode[] => {
                 return nodes.map(node => {
                     if (node.id === targetId) {
-                        return { ...node, contentMarkdown: targetContent };
+                        return { ...node, contentMarkdown: targetContent || '' };
                     }
                     if (node.children && node.children.length > 0) {
                         return { ...node, children: updateNodeInTree(node.children) };
@@ -486,7 +454,6 @@ export const useStore = create<AppState>((set, get) => ({
     renameNode: async (id, title) => {
         await axios.put(`${API_URL}/notes/${id}`, { title }, { withCredentials: true });
 
-        // Update local state if the renamed node is selected
         const { selectedNoteId } = get();
         if (selectedNoteId === id) {
             set({ selectedNoteTitle: title });
@@ -542,10 +509,8 @@ export const useStore = create<AppState>((set, get) => ({
         set({ chatMessages: newMessages, isLoadingChat: true });
 
         try {
-            // Prepare messages for backend
             let backendMessages = newMessages.map(m => ({ role: m.role, content: m.content }));
 
-            // RAG / Context Injection
             if (useContext) {
                 try {
                     const ragRes = await axios.post(`${API_URL}/rag/search`, { query: message }, { withCredentials: true });
@@ -553,14 +518,11 @@ export const useStore = create<AppState>((set, get) => ({
                     if (chunks && chunks.length > 0) {
                         const contextBlock = chunks.map((c: any) => `[Note: ${c.title}]\n${c.chunk_content}`).join('\n\n');
                         const contextString = `\n\nRelevant Context from Notes:\n${contextBlock}\n\n`;
-
-                        // Inject into the last message content
                         const lastMsgFn = backendMessages[backendMessages.length - 1];
                         lastMsgFn.content = contextString + lastMsgFn.content;
                     }
                 } catch (ragError) {
                     console.error("RAG fetch failed", ragError);
-                    // Fail silently/gracefully on RAG error, just proceed without context
                 }
             }
 
@@ -570,12 +532,12 @@ export const useStore = create<AppState>((set, get) => ({
             };
 
             const res = await axios.post(`${API_URL}/chat`, {
-                config: configToSend, // Send active provider with global SearXNG URL
+                config: configToSend,
                 messages: backendMessages,
                 noteContent: includeNoteContent ? selectedNoteContent : undefined,
                 mode,
                 useSearch,
-                language: get().language // Send current language
+                language: get().language
             }, { withCredentials: true });
 
             set({
@@ -598,8 +560,6 @@ export const useStore = create<AppState>((set, get) => ({
         const { settings } = get();
         const newSettings = { ...settings, providers: [...settings.providers, provider] };
         set({ settings: newSettings });
-        // Security: Do not save to localStorage
-        // localStorage.setItem('llm_settings_v2', JSON.stringify(newSettings));
     },
 
     updateProvider: (id, updates) => {
@@ -607,35 +567,27 @@ export const useStore = create<AppState>((set, get) => ({
         const newProviders = settings.providers.map(p => p.id === id ? { ...p, ...updates } : p);
         const newSettings = { ...settings, providers: newProviders };
         set({ settings: newSettings });
-        // Security: Do not save to localStorage
-        // localStorage.setItem('llm_settings_v2', JSON.stringify(newSettings));
     },
 
     removeProvider: (id) => {
         const { settings } = get();
         const newProviders = settings.providers.filter(p => p.id !== id);
-        // If active provider is removed, select the first one or none
         let newActiveId = settings.activeProviderId;
         if (id === settings.activeProviderId) {
             newActiveId = newProviders.length > 0 ? newProviders[0].id : '';
         }
         const newSettings = { ...settings, providers: newProviders, activeProviderId: newActiveId };
         set({ settings: newSettings });
-        // Security: Do not save to localStorage
-        // localStorage.setItem('llm_settings_v2', JSON.stringify(newSettings));
     },
 
     setActiveProvider: (id) => {
         const { settings } = get();
         const newSettings = { ...settings, activeProviderId: id };
         set({ settings: newSettings });
-        // Security: Do not save to localStorage
-        // localStorage.setItem('llm_settings_v2', JSON.stringify(newSettings));
     },
 
     toggleSettings: () => set((state) => ({ isSettingsOpen: !state.isSettingsOpen })),
 
-    // Modal Actions
     modal: {
         isOpen: false,
         type: 'alert',
@@ -662,7 +614,6 @@ export const useStore = create<AppState>((set, get) => ({
         modal: { ...state.modal, isOpen: false }
     })),
 
-    // Admin Actions
     fetchUsers: async () => {
         try {
             const res = await axios.get(`${API_URL}/users`, { withCredentials: true });
@@ -733,7 +684,6 @@ export const useStore = create<AppState>((set, get) => ({
         }
     },
 
-    // User Actions
     resetOwnPassword: async (newPassword) => {
         try {
             await axios.post(`${API_URL}/auth/reset-password`, { newPassword }, { withCredentials: true });
@@ -749,18 +699,13 @@ export const useStore = create<AppState>((set, get) => ({
             const res = await axios.get(`${API_URL}/settings/llm`, { withCredentials: true });
             if (res.data) {
                 if (res.data) {
-                    // Update local settings to reflect global config
-                    // Check if res.data is new format (LLMSettings) or old (LLMProvider)
                     let newSettings;
                     if (res.data.providers && Array.isArray(res.data.providers)) {
                         newSettings = res.data;
 
-                        // Merge missing default providers (e.g. new audio provider)
                         const currentProviderIds = new Set(newSettings.providers.map((p: any) => p.id));
                         const missingDefaults = defaultProviders.filter(dp =>
                             !currentProviderIds.has(dp.id) &&
-                            // Only allow auto-adding specific new defaults (like whisper). 
-                            // Do NOT auto-add 'default-ollama', 'default-openai', or 'default-embeddings' if the user deleted them.
                             (dp.id === 'default-whisper')
                         );
 
@@ -768,21 +713,16 @@ export const useStore = create<AppState>((set, get) => ({
                             newSettings.providers = [...newSettings.providers, ...missingDefaults];
                         }
 
-
-                        // Ensure audioProviderId is set
                         if (!newSettings.audioProviderId) {
                             newSettings.audioProviderId = 'default-whisper';
                         }
 
-                        // HOTFIX: Correct stale local whisper URL and Model if present
                         newSettings.providers = newSettings.providers.map((p: any) => {
                             if (p.id === 'default-whisper') {
                                 const updates: any = {};
-                                // Fix URL
                                 if (p.baseUrl === 'http://whisper:8000') {
                                     updates.baseUrl = 'http://whisper:8000/v1/audio/transcriptions';
                                 }
-                                // Fix Model Name (missing prefix or old default)
                                 if (p.model === 'faster-whisper-large-v3-turbo-ct2' || p.model === 'large-v3') {
                                     updates.model = 'deepdml/faster-whisper-large-v3-turbo-ct2';
                                 }
@@ -791,7 +731,6 @@ export const useStore = create<AppState>((set, get) => ({
                             return p;
                         });
                     } else {
-                        // Legacy format: res.data is a single provider
                         newSettings = {
                             ...get().settings,
                             providers: [res.data],
@@ -802,9 +741,6 @@ export const useStore = create<AppState>((set, get) => ({
                     }
 
                     set({ settings: newSettings });
-                    set({ settings: newSettings });
-                    // Security: Do not save to localStorage
-                    // localStorage.setItem('llm_settings_v2', JSON.stringify(newSettings));
                 }
             }
         } catch (error) {
@@ -822,10 +758,8 @@ export const useStore = create<AppState>((set, get) => ({
         }
     },
 
-    // Custom Prompts
     customPrompts: initialPrompts,
 
-    // --- Custom Prompts (Cloud Synced) ---
     fetchCustomPrompts: async () => {
         try {
             const { user } = get();
@@ -834,16 +768,12 @@ export const useStore = create<AppState>((set, get) => ({
             const res = await axios.get(`${API_URL}/user/settings/custom_prompts`);
             let serverPrompts = res.data;
 
-            // Migration Logic: If server Empty, check localStorage
             if (!serverPrompts) {
                 const localPrompts = localStorage.getItem('custom_prompts');
                 if (localPrompts) {
                     try {
                         serverPrompts = JSON.parse(localPrompts);
-                        // Save to server
                         await axios.put(`${API_URL}/user/settings/custom_prompts`, { value: serverPrompts });
-                        // Clear local storage to avoid future conflicts? Or keep as backup?
-                        // Let's keep it clean.
                         localStorage.removeItem('custom_prompts');
                     } catch (e) {
                         console.error('Migration parse error', e);
@@ -856,7 +786,6 @@ export const useStore = create<AppState>((set, get) => ({
             set({ customPrompts: serverPrompts });
         } catch (error) {
             console.error('Failed to fetch custom prompts:', error);
-            // Fallback to empty or keep current?
         }
     },
 
@@ -864,7 +793,6 @@ export const useStore = create<AppState>((set, get) => ({
         const { customPrompts } = get();
         const newPrompts = [...customPrompts, { label, prompt }];
         set({ customPrompts: newPrompts });
-        // Sync to Cloud
         axios.put(`${API_URL}/user/settings/custom_prompts`, { value: newPrompts }).catch(console.error);
     },
 
@@ -886,7 +814,6 @@ export const useStore = create<AppState>((set, get) => ({
         axios.put(`${API_URL}/user/settings/custom_prompts`, { value: newPrompts }).catch(console.error);
     },
 
-    // Version History
     fetchNoteVersions: async (noteId: string) => {
         try {
             const res = await axios.get(`${API_URL}/notes/${noteId}/versions`, { withCredentials: true });
@@ -902,10 +829,8 @@ export const useStore = create<AppState>((set, get) => ({
             const res = await axios.post(`${API_URL}/notes/${noteId}/restore/${versionId}`, {}, { withCredentials: true });
             const restoredContent = res.data.content;
 
-            // Update local state
             set({ selectedNoteContent: restoredContent });
 
-            // Update Tree
             const updateNodeInTree = (nodes: NoteNode[]): NoteNode[] => {
                 return nodes.map(node => {
                     if (node.id === noteId) {

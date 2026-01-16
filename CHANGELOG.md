@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.12] - 2026-01-16
+### Fixed
+- **Data Protection (Critical)**:
+  - **Shutdown Race**: Fixed a race condition where the Editor could overwrite note content with empty data if autosave triggered before the note was fully loaded (Startup Bug).
+  - **Folder Moves**: Implemented atomic ACID transactions and cycle detection in the backend to prevent data corruption during folder reordering.
+  - **Save Safety**: Added strict null-checks to the save logic to abort any operation if the source content is not fully initialized.
+- **Frontend**: Fixed a regression where `content` vs. `content_markdown` property mismatch caused notes to hang in "Loading..." state.
+- **Infrastructure**: Verified and stabilized multi-arch builds (`amd64`/`arm64`) for seamless deployment on mixed clusters.
+
 ## [0.9.11] - 2026-01-14
 ### Added
 - **Default LLM**: Added option in Settings to select a specific "Default" (Standard) LLM provider. This provider will be automatically selected when starting a new chat.

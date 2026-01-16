@@ -723,6 +723,18 @@ export const Editor: React.FC = () => {
         );
     }
 
+    // Safety: If content is null (not loaded yet), show loading state to prevent "empty autosave" race condition.
+    if (selectedNoteContent === null) {
+        return (
+            <div className="h-full flex items-center justify-center text-gray-400 bg-gray-50 dark:bg-gray-900">
+                <div className="flex flex-col items-center gap-2">
+                    <i className="fa fa-spinner fa-spin text-2xl"></i>
+                    <span>Lade Notiz...</span>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="h-full flex flex-col relative">
             <div className="h-[46px] px-2 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs text-gray-500 dark:text-gray-400 flex justify-between items-center">

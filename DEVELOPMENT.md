@@ -630,3 +630,25 @@ Features related to the Sidebar/Explorer file tree.
 - **Native Overflow**: Reverted to fixed height but added `overflow: visible` to the toolbar container to allow the native "More" (⋮) menu to appear.
 - **Button Sizing**: Applied `flex-shrink: 0` to toolbar groups to prevent buttons from being compressed before the overflow triggers.
 - **Simplification**: Removed less commonly used buttons (`indent`, `outdent`) to save space.
+
+## 13. Data Safety & Integrity (Critical)
+
+### Folder Move Safety (Backend)
+- **Problem**: Moving a folder into its own subdirectory creates an infinite loop (Cycle) in the tree structure.
+- **Solution**:
+  - **Cycle Detection**: The backend (`PUT /notes/reorder`) builds a temporary ancestor map of the move target. If the target's parent chain includes the node being moved, the operation is aborted.
+  - **ACID Transactions**: All reordering operations are wrapped in `BEGIN ... COMMIT/ROLLBACK` blocks. If any part of the move fails (e.g., cycle detected), the database rolls back to its previous state, preventing partial updates and "orphaned" nodes.
+
+### Startup Race Condition
+- **Problem**: On slow connections, the Editor component might initialize and trigger an "Autosave" (sending an empty string) before the `fetchNoteContent` async call completes.
+- **Solution**:
+  - **Null State**: `selectedNoteContent` in `useStore` is now typed as `string | null` (previously just `string`).
+    - `null` = Loading / Not yet known.
+    - `""` = Explicitly empty note.
+  - **Editor Guard**: The Editor component renders a loading spinner until `content !== null`.
+  - **Save Guard**: `saveNoteContent` explicitly checks `if (targetContent === null) return;` to prevent overwriting server data with a client-side loading state.
+
+### Frontend-Backend Property Sync
+- **Caution**: The backend returns `content_markdown`. The frontend `store.ts` must map this correctly.
+- **Regression**: A previous bug used `res.data.content` (undefined) which caused the app to hang in the loading state. Ensure strictly typed interfaces match the SQL query result columns.
+

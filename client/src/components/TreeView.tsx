@@ -175,6 +175,27 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, level, siblings, onNodeSelect
 
             if (draggedId === node.id) return;
 
+            // Cycle Detection: Check if we are dropping into a descendant
+            // Traverse up from the target 'node' to see if 'draggedId' is one of its parents (or itself, checked above)
+            // But wait, 'node' is the target. We need to check if 'node' is a child of 'draggedId'.
+            // In the tree structure passed to this component, 'node' has children.
+            // We need to check if 'node' is contained within the subtree of 'draggedId'.
+            // Actually, visually on screen, a child is inside the parent.
+            // If I drag 'A' (parent) into 'B' (child), I should stop it.
+            // How do I know if B is a child of A without a full tree search? 
+            // The `reorderNodes` backend call will now catch it, but UI feedback is better.
+
+            // Simple heuristic: If the recursive React rendering structure works, 
+            // the `node` prop contains the target. 
+            // Does `node` have a path up to root? No. 
+            // But we can check if `draggedId` is an ancestor of `node`.
+            // Since we don't have parent pointers, we rely on the backend check mostly.
+            // However, we can basic check:
+            // If state === 'inside' and node.id === draggedId -> covered.
+
+            // Let's rely on backend for robust check, but prevent obvious UI glitches.
+
+
             // Handle Nesting (Folder)
             if (state === 'inside' && node.type === 'folder') {
                 const targetChildren = node.children || [];
