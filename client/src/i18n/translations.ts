@@ -25,6 +25,7 @@ export const translations = {
             delete: 'Löschen',
             duplicate: 'Duplizieren',
             searchPlaceholder: 'Notizen suchen...',
+            quickNote: 'Schnellnotiz',
         },
         editor: {
             placeholder: 'Beginnen Sie zu schreiben...',
@@ -286,6 +287,7 @@ export const translations = {
             delete: 'Delete',
             duplicate: 'Duplicate',
             searchPlaceholder: 'Search notes...',
+            quickNote: 'Quick Note',
         },
         editor: {
             placeholder: 'Start writing...',
@@ -543,6 +545,7 @@ export const translations = {
             delete: 'Supprimer',
             duplicate: 'Dupliquer',
             searchPlaceholder: 'Chercher des notes...',
+            quickNote: 'Note Rapide',
         },
         editor: {
             placeholder: 'Commencez à écrire...',
@@ -800,6 +803,7 @@ export const translations = {
             delete: 'Elimina',
             duplicate: 'Duplica',
             searchPlaceholder: 'Cerca note...',
+            quickNote: 'Nota Rapida',
         },
         editor: {
             placeholder: 'Inizia a scrivere...',
@@ -1057,6 +1061,7 @@ export const translations = {
             delete: 'Eliminar',
             duplicate: 'Duplicar',
             searchPlaceholder: 'Buscar notas...',
+            quickNote: 'Nota Rápida',
         },
         editor: {
             placeholder: 'Empieza a escribir...',
@@ -1314,6 +1319,7 @@ export const translations = {
             delete: 'Verwijderen',
             duplicate: 'Dupliceren',
             searchPlaceholder: 'Notities zoeken...',
+            quickNote: 'Snelle Notitie',
         },
         editor: {
             placeholder: 'Begin met schrijven...',

@@ -57,7 +57,7 @@ interface AppState {
     fetchNoteContent: (id: string) => Promise<void>;
     updateNoteContent: (content: string) => void;
     saveNoteContent: (id?: string, content?: string) => Promise<void>;
-    createNode: (parentId: string | null, type: 'folder' | 'note', title: string) => Promise<void>;
+    createNode: (parentId: string | null, type: 'folder' | 'note', title: string) => Promise<string>;
     deleteNode: (id: string) => Promise<void>;
     duplicateNode: (id: string) => Promise<void>;
     renameNode: (id: string, title: string) => Promise<void>;
@@ -434,8 +434,9 @@ export const useStore = create<AppState>((set, get) => ({
     },
 
     createNode: async (parentId, type, title) => {
-        await axios.post(`${API_URL}/notes`, { parentId, type, title }, { withCredentials: true });
+        const res = await axios.post(`${API_URL}/notes`, { parentId, type, title }, { withCredentials: true });
         await get().fetchTree();
+        return res.data.id;
     },
 
     deleteNode: async (id) => {

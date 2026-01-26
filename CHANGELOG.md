@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.13] - 2026-01-26
+### Added
+- **Quick Note**: Added a lightning bolt button in the explorer to instantly create a timestamped note (`YYYY-MM-DD_HH:mm`).
+- **Mobile Experience**:
+  - **Default View**: Explorer is now the default view on mobile devices.
+  - **Auto-Switch**: Creating a Quick Note automatically switches to the Editor view on mobile.
+  - **Screen Wake Lock**: Prevents the device screen from locking while the application is active.
+- **Internationalization**: Added translations for the "Quick Note" button.
+
+### Changed
+- **UX**: Quick Notes are now automatically selected/opened upon creation.
+
 ## [0.9.12] - 2026-01-16
 ### Fixed
 - **Data Protection (Critical)**:

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useStore } from '../store';
 import type { NoteNode } from '../types';
-import { Folder, FileText, ChevronRight, ChevronDown, Plus, Trash2, Edit2, Copy, Search, ArrowUpDown } from 'lucide-react';
+import { Folder, FileText, ChevronRight, ChevronDown, Plus, Trash2, Edit2, Copy, Search, ArrowUpDown, Zap } from 'lucide-react';
 
 import { translations } from '../i18n/translations';
 
@@ -417,6 +417,41 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
         });
     };
 
+    const handleQuickNote = async () => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hour = String(now.getHours()).padStart(2, '0');
+        const minute = String(now.getMinutes()).padStart(2, '0');
+
+        const timestamp = `${year}-${month}-${day}_${hour}:${minute}`;
+
+        const newId = await createNode(null, 'note', timestamp);
+
+        if (newId) {
+            const findNodeById = (nodes: NoteNode[], id: string): NoteNode | null => {
+                for (const node of nodes) {
+                    if (node.id === id) return node;
+                    if (node.children) {
+                        const found = findNodeById(node.children, id);
+                        if (found) return found;
+                    }
+                }
+                return null;
+            };
+
+            const freshTree = useStore.getState().tree;
+            const newNode = findNodeById(freshTree, newId);
+            if (newNode) {
+                selectNote(newNode);
+                if (onNodeSelect) {
+                    onNodeSelect();
+                }
+            }
+        }
+    };
+
     const handleDragOverRoot = (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -470,6 +505,13 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
                         {t.sidebar.explorer}
                     </span>
                     <div className="flex gap-1 text-gray-500 dark:text-gray-400">
+                        <button
+                            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+                            onClick={handleQuickNote}
+                            title={t.sidebar.quickNote}
+                        >
+                            <Zap size={isMobile ? 20 : 14} className="text-yellow-500 fill-yellow-500" />
+                        </button>
                         <button
                             className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
                             onClick={() => handleCreateRoot('note')}

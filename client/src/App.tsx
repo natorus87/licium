@@ -12,12 +12,48 @@ import { ModalManager } from './components/ModalManager';
 import { translations } from './i18n/translations';
 import { useSwipeable } from 'react-swipeable';
 
+// Wake Lock Hook
+const useWakeLock = () => {
+  useEffect(() => {
+    let wakeLock: any = null;
+
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await (navigator as any).wakeLock.request('screen');
+          console.log('Wake Lock is active');
+        }
+      } catch (err: any) {
+        console.warn(`Wake Lock request failed: ${err.name}, ${err.message}`);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (wakeLock !== null && document.visibilityState === 'visible') {
+        requestWakeLock();
+      }
+    };
+
+    requestWakeLock();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (wakeLock !== null) {
+        wakeLock.release()
+          .then(() => {
+            wakeLock = null;
+            console.log('Wake Lock released');
+          });
+      }
+    };
+  }, []);
+};
+
 function App() {
+  useWakeLock();
   const { isAuthenticated, isCheckingAuth, user, checkAuth, logout, fetchTree, fetchGlobalSettings, toggleSettings, language, selectedNoteTitle, darkMode, setDarkMode } = useStore();
   const t = translations[language];
-  const [showExplorer, setShowExplorer] = useState(true);
-  const [showChat, setShowChat] = useState(true);
-
   // Mobile Check helper
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   useEffect(() => {
@@ -25,6 +61,9 @@ function App() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const [showExplorer, setShowExplorer] = useState(true);
+  const [showChat, setShowChat] = useState(!isMobile);
 
   // Sync Document Title ONLY for Print/PDF (Ctrl+P)
   useEffect(() => {
