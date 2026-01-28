@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.15] - 2026-01-27
+### Fixed
+- **Empty Note Bug (Whisper)**: Fixed a race condition where the editor's debounced autosave could overwrite the text from a completed transcription with an empty state. Added explicit `clearTimeout` and atomic store updates in `handleTranscription`.
+- **History Freeze**: Fixed a browser freeze when opening the history modal caused by invalid date parsing. Added error guards to the date renderer.
+- **Backend Stability**: Hardened the version history logic to ensure `content_markdown` is never saved as `null` (defaults to empty string), preventing database corruption or frontend crashes.
+
+## [0.9.14] - 2026-01-26
+### Added
+- **Trash / Recycle Bin**:
+  - **Soft Delete**: Deleted notes are moved to a Trash can instead of being permanently removed immediately.
+  - **UI**: Dedicated "Trash" section in the Explorer sidebar.
+  - **Restore**: Restore files and folders from Trash to their original location (or Root if parent is missing).
+  - **Empty Trash**: Permanently delete all items in the trash.
+  - **Drag & Drop**: Drag items to Trash to delete; drag from Trash to folders to restore.
+- **Backend**: Implemented recursive soft-deletes and auto-cleanup logic (30-day retention).
+- **Chat UX**: Improved chat input field to be an auto-expanding textarea, allowing multi-line prompts (Shift+Enter) and better visibility for long inputs.
+
 ## [0.9.13] - 2026-01-26
 ### Added
 - **Quick Note**: Added a lightning bolt button in the explorer to instantly create a timestamped note (`YYYY-MM-DD_HH:mm`).

@@ -1,26 +1,28 @@
-import { Pool, QueryResult } from 'pg';
-import dotenv from 'dotenv';
-import path from 'path';
-import fs from 'fs';
-
-dotenv.config();
-
-const pool = new Pool({
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.initializeDatabase = initializeDatabase;
+exports.getDb = getDb;
+exports.query = query;
+exports.saveDatabase = saveDatabase;
+const pg_1 = require("pg");
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
+const pool = new pg_1.Pool({
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '5432'),
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres',
     database: process.env.DB_NAME || 'notebook',
 });
-
-export async function initializeDatabase() {
+async function initializeDatabase() {
     try {
         await pool.query('SELECT NOW()');
         console.log('✓ Connected to PostgreSQL');
-
         // Enable Vector Extension
         await pool.query('CREATE EXTENSION IF NOT EXISTS vector;');
-
         // Create tables
         await pool.query(`
             CREATE TABLE IF NOT EXISTS users (
@@ -31,7 +33,6 @@ export async function initializeDatabase() {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
-
         await pool.query(`
             CREATE TABLE IF NOT EXISTS notes (
                 id TEXT PRIMARY KEY,
@@ -46,7 +47,6 @@ export async function initializeDatabase() {
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             );
         `);
-
         // Migration: Add content_hash to notes if not exists
         await pool.query(`
             DO $$
@@ -56,7 +56,6 @@ export async function initializeDatabase() {
                 END IF;
             END $$;
         `);
-
         // Migration: Add position to notes for sorting
         await pool.query(`
             DO $$
@@ -66,17 +65,14 @@ export async function initializeDatabase() {
                 END IF;
             END $$;
         `);
-
         await pool.query(`
             CREATE TABLE IF NOT EXISTS settings (
                 key TEXT PRIMARY KEY,
                 value TEXT
             );
         `);
-
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_notes_user_id ON notes(user_id);`);
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_notes_parent_id ON notes(parent_id);`);
-
         // User Settings Table (Cloud Sync)
         await pool.query(`
             CREATE TABLE IF NOT EXISTS user_settings (
@@ -86,7 +82,6 @@ export async function initializeDatabase() {
                 PRIMARY KEY (user_id, key)
             );
         `);
-
         // Version History Table
         await pool.query(`
             CREATE TABLE IF NOT EXISTS note_versions (
@@ -99,7 +94,6 @@ export async function initializeDatabase() {
             );
         `);
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_note_versions_note_id ON note_versions(note_id);`);
-
         // Session table for connect-pg-simple
         await pool.query(`
             CREATE TABLE IF NOT EXISTS session (
@@ -111,7 +105,6 @@ export async function initializeDatabase() {
         `);
         // ALTER TABLE removed as it is not idempotent
         await pool.query(`CREATE INDEX IF NOT EXISTS IDX_session_expire ON session (expire);`);
-
         await pool.query(`
             CREATE TABLE IF NOT EXISTS images (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -121,11 +114,6 @@ export async function initializeDatabase() {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
-
-
-
-
-
         // Migration: Add deleted_at to notes for trash feature
         await pool.query(`
             DO $$
@@ -135,9 +123,7 @@ export async function initializeDatabase() {
                 END IF;
             END $$;
         `);
-
         // Migration: Add content_hash to notes if not exists (already added in previous step, double check unnecessary but safe)
-
         await pool.query(`
             CREATE TABLE IF NOT EXISTS note_embeddings(
             id SERIAL PRIMARY KEY,
@@ -148,44 +134,37 @@ export async function initializeDatabase() {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         `);
-
         // Migration: Alter embedding column to be generic if it has a dimension restriction
         // This allows switching between models (e.g. OpenAI 1536 -> MiniLM 384)
         // We catch error in case incompatible data exists, but usually implicit cast works if table is empty
         try {
             await pool.query('ALTER TABLE note_embeddings ALTER COLUMN embedding TYPE vector');
-        } catch (e) {
+        }
+        catch (e) {
             console.log('Note: Could not alter embedding column to generic vector (might already be set or data mismatch). ignoring.');
         }
-
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_note_embeddings_note_id ON note_embeddings(note_id); `);
         // Vector index (IVFFlat) cannot be created without dimensions. We skip it for generic vectors.
-
         // Cleanup: Delete items in trash older than 30 days
         const cleanupRes = await pool.query("DELETE FROM notes WHERE deleted_at < NOW() - INTERVAL '30 days'");
         if ((cleanupRes.rowCount || 0) > 0) {
             console.log(`[Startup] Cleaned up ${cleanupRes.rowCount} items from trash.`);
         }
-
         console.log('✓ Database initialized');
-
-    } catch (error) {
+    }
+    catch (error) {
         console.error('Failed to initialize database:', error);
         process.exit(1);
     }
 }
-
-export function getDb() {
+function getDb() {
     return pool;
 }
-
 // Helper to replace SQLite's db.exec/db.run
-export async function query(text: string, params?: any[]): Promise<QueryResult> {
+async function query(text, params) {
     return pool.query(text, params);
 }
-
 // No saveDatabase needed for Postgres
-export function saveDatabase() {
+function saveDatabase() {
     // No-op
 }
-

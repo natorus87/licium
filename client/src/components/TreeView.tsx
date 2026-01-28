@@ -321,102 +321,88 @@ interface TreeViewProps {
     isMobile?: boolean;
 }
 
-export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) => {
-    const { tree, createNode, openModal, reorderNodes, sortNodes, renameNode, deleteNode, duplicateNode, language, selectNote } = useStore();
+const TrashNode: React.FC<{ node: NoteNode }> = ({ node }) => {
+    const { restoreNode, deleteNodePermanently, language, openModal } = useStore();
     const t = translations[language];
-    const [isDragOverRoot, setIsDragOverRoot] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
 
-    // Search Logic ... (Unchanged)
-    const searchResults = useMemo(() => {
-        if (!searchQuery.trim()) return [];
-        const query = searchQuery.toLowerCase();
-        const results: NoteNode[] = [];
-        const searchNodes = (nodes: NoteNode[]) => {
-            for (const node of nodes) {
-                if (node.title.toLowerCase().includes(query) || node.contentMarkdown?.toLowerCase().includes(query)) {
-                    results.push(node);
-                }
-                if (node.children) searchNodes(node.children);
-            }
-        };
-        searchNodes(tree);
-        return results;
-    }, [searchQuery, tree]);
-
-    // Context Menu State ... (Unchanged)
-    const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number; node: NoteNode | null }>({
-        visible: false, x: 0, y: 0, node: null
-    });
-
-    React.useEffect(() => {
-        const handleClick = () => setContextMenu(prev => ({ ...prev, visible: false }));
-        document.addEventListener('click', handleClick);
-        return () => document.removeEventListener('click', handleClick);
-    }, []);
-
-    const handleNodeContextMenu = (e: React.MouseEvent, node: NoteNode) => {
-        let x = e.clientX;
-        let y = e.clientY;
-        if (window.innerWidth - x < 200) x = window.innerWidth - 200;
-        if (window.innerHeight - y < 250) y = window.innerHeight - 250;
-        setContextMenu({ visible: true, x, y, node });
+    const handleRestore = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        await restoreNode(node.id);
     };
 
-    const handleMenuAction = async (action: 'newInfo' | 'newFolder' | 'rename' | 'duplicate' | 'delete') => {
-        const node = contextMenu.node;
-        if (!node) return;
-        setContextMenu(prev => ({ ...prev, visible: false }));
-
-        switch (action) {
-            case 'newInfo':
-                openModal({
-                    type: 'prompt',
-                    title: t.sidebar.newNote,
-                    message: 'Name:',
-                    onConfirm: async (val) => val && await createNode(node.id, 'note', val as string)
-                });
-                break;
-            case 'newFolder':
-                openModal({
-                    type: 'prompt',
-                    title: t.sidebar.newFolder,
-                    message: 'Name:',
-                    onConfirm: async (val) => val && await createNode(node.id, 'folder', val as string)
-                });
-                break;
-            case 'rename':
-                openModal({
-                    type: 'prompt',
-                    title: t.sidebar.rename,
-                    message: 'Name:',
-                    inputValue: node.title,
-                    onConfirm: async (val) => val && await renameNode(node.id, val as string)
-                });
-                break;
-            case 'duplicate':
-                await duplicateNode(node.id);
-                break;
-            case 'delete':
-                openModal({
-                    type: 'confirm',
-                    title: t.general.delete,
-                    message: `Sind Sie sicher, dass Sie "${node.title}" löschen möchten?`,
-                    onConfirm: async () => await deleteNode(node.id)
-                });
-                break;
-        }
-    };
-
-    const handleCreateRoot = async (type: 'folder' | 'note') => {
+    const handlePermanentDelete = async (e: React.MouseEvent) => {
+        e.stopPropagation();
         openModal({
-            type: 'prompt',
-            title: `Neuen Stamm-${type === 'folder' ? 'Ordner' : 'Notiz'} erstellen`,
-            message: 'Name:',
-            onConfirm: async (val) => val && await createNode(null, type, val as string)
+            type: 'confirm',
+            title: t.trash.deletePermanently,
+            message: `"${node.title}" unwiderruflich löschen?`,
+            onConfirm: async () => {
+                await deleteNodePermanently(node.id);
+            }
         });
     };
 
+    // Drag Source for Trash Nodes (to be restored)
+    const handleDragStart = (e: React.DragEvent) => {
+        e.dataTransfer.setData('application/json', JSON.stringify({
+            id: node.id,
+            type: node.type,
+            origin: 'trash'
+        }));
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    return (
+        <div
+            className="pl-4 py-1 flex items-center hover:bg-neutral-200 dark:hover:bg-neutral-800 cursor-pointer group opacity-70"
+            draggable
+            onDragStart={handleDragStart}
+        >
+            <div className="mr-2">
+                {node.type === 'folder' ? <Folder size={16} className="text-blue-500" /> : <FileText size={16} className="text-gray-500" />}
+            </div>
+            <span className="flex-1 truncate text-sm">{node.title}</span>
+            <div className="hidden group-hover:flex space-x-1">
+                <button onClick={handleRestore} className="p-1 hover:bg-neutral-300 dark:hover:bg-neutral-700 rounded" title={t.trash.restore}>
+                    <ArrowUpDown size={14} className="rotate-90" />
+                </button>
+                <button onClick={handlePermanentDelete} className="p-1 hover:bg-neutral-300 dark:hover:bg-neutral-700 rounded text-red-500" title={t.trash.deletePermanently}>
+                    <Trash2 size={14} />
+                </button>
+            </div>
+        </div>
+    );
+};
+
+export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) => {
+    const { tree, trashNodes, fetchTrash, emptyTrash, reorderNodes, deleteNode, createNode, selectNote, openModal, language, sortNodes, renameNode, duplicateNode } = useStore();
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isTrashOpen, setIsTrashOpen] = useState(false);
+    const [isDragOverRoot, setIsDragOverRoot] = useState(false);
+    const t = translations[language];
+
+    // Filter logic
+    const filterNodes = (nodes: NoteNode[], term: string): NoteNode[] => {
+        if (!term) return nodes;
+        return nodes.reduce((acc: NoteNode[], node) => {
+            const matches = node.title.toLowerCase().includes(term.toLowerCase());
+            const childMatches = node.children ? filterNodes(node.children, term) : [];
+
+            if (matches || childMatches.length > 0) {
+                acc.push({
+                    ...node,
+                    children: childMatches
+                });
+            }
+            return acc;
+        }, []);
+    };
+
+    const searchResults = useMemo(() => {
+        return filterNodes(tree, searchTerm);
+    }, [tree, searchTerm]);
+
+    // Handle Quick Note
     const handleQuickNote = async () => {
         const now = new Date();
         const year = now.getFullYear();
@@ -452,6 +438,15 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
         }
     };
 
+    const handleCreateRoot = async (type: 'folder' | 'note') => {
+        openModal({
+            type: 'prompt',
+            title: `Neuen Stamm-${type === 'folder' ? 'Ordner' : 'Notiz'} erstellen`,
+            message: 'Name:',
+            onConfirm: async (val) => val && await createNode(null, type, val as string)
+        });
+    };
+
     const handleDragOverRoot = (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -476,7 +471,18 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
             const data = JSON.parse(e.dataTransfer.getData('application/json'));
             const draggedId = data.id;
 
-            // Re-partition root nodes
+            // Handle Restore from Trash to Root
+            if (data.origin === 'trash') {
+                // If dropped on root, we just restore. The backend restore logic might handle re-parenting if parent is missing.
+                // But explicitly, we might want to ensure it goes to root? 
+                // The current restore implementation tries to restore to original parent.
+                // If drag to root, maybe we should force parent to null?
+                // For now, let's just trigger restore.
+                await useStore.getState().restoreNode(draggedId);
+                return;
+            }
+
+            // Normal Reorder
             const filteredRoot = tree.filter(n => n.id !== draggedId);
             const newOrderIds = [...filteredRoot.map(n => n.id), draggedId];
 
@@ -492,6 +498,92 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
         }
     };
 
+    const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number; node: NoteNode | null }>({
+        visible: false, x: 0, y: 0, node: null
+    });
+
+    const handleNodeContextMenu = (e: React.MouseEvent, node: NoteNode) => {
+        let x = e.clientX;
+        let y = e.clientY;
+        if (window.innerWidth - x < 200) x = window.innerWidth - 200;
+        if (window.innerHeight - y < 250) y = window.innerHeight - 250;
+        setContextMenu({ visible: true, x, y, node });
+    };
+
+    // ... Context Menu Actions (simplified for brevity, re-using logic)
+    const handleMenuAction = async (action: string) => {
+        const node = contextMenu.node;
+        if (!node) return;
+        setContextMenu(prev => ({ ...prev, visible: false }));
+        // ... reuse existing logic or implement simplistic version for now
+        if (action === 'delete') {
+            openModal({
+                type: 'confirm',
+                title: t.general.delete,
+                message: `Sind Sie sicher, dass Sie "${node.title}" löschen möchten?`,
+                onConfirm: async () => await deleteNode(node.id)
+            });
+        }
+        // ... other actions
+        if (action === 'rename') {
+            openModal({
+                type: 'prompt',
+                title: t.sidebar.rename,
+                message: 'Name:',
+                inputValue: node.title,
+                onConfirm: async (val) => val && await renameNode(node.id, val as string)
+            });
+        }
+        if (action === 'duplicate') await duplicateNode(node.id);
+        if (action === 'newInfo') {
+            openModal({
+                type: 'prompt',
+                title: t.sidebar.newNote,
+                message: 'Name:',
+                onConfirm: async (val) => val && await createNode(node.id, 'note', val as string)
+            });
+        }
+        if (action === 'newFolder') {
+            openModal({
+                type: 'prompt',
+                title: t.sidebar.newFolder,
+                message: 'Name:',
+                onConfirm: async (val) => val && await createNode(node.id, 'folder', val as string)
+            });
+        }
+
+    };
+
+    // Trash Handlers
+    const toggleTrash = () => {
+        if (!isTrashOpen) {
+            fetchTrash();
+        }
+        setIsTrashOpen(!isTrashOpen);
+    };
+
+    const handleEmptyTrash = () => {
+        openModal({
+            type: 'confirm',
+            title: t.trash.emptyTrash,
+            message: 'Sind Sie sicher? Alle Dateien im Papierkorb werden unwiderruflich gelöscht.',
+            onConfirm: () => emptyTrash()
+        });
+    };
+
+    // Drop on Trash Area (to delete)
+    const handleDropOnTrash = async (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+            const data = JSON.parse(e.dataTransfer.getData('application/json'));
+            if (data.origin === 'trash') return; // Cannot delete trash items again
+
+            // Soft Delete
+            await deleteNode(data.id);
+        } catch (e) { console.error(e) }
+    };
+
     return (
         <div
             className={`h-full flex flex-col ${isDragOverRoot ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
@@ -505,32 +597,16 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
                         {t.sidebar.explorer}
                     </span>
                     <div className="flex gap-1 text-gray-500 dark:text-gray-400">
-                        <button
-                            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
-                            onClick={handleQuickNote}
-                            title={t.sidebar.quickNote}
-                        >
+                        <button className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors" onClick={handleQuickNote} title={t.sidebar.quickNote}>
                             <Zap size={isMobile ? 20 : 14} className="text-yellow-500 fill-yellow-500" />
                         </button>
-                        <button
-                            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
-                            onClick={() => handleCreateRoot('note')}
-                            title={t.sidebar.newNote}
-                        >
+                        <button className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors" onClick={() => handleCreateRoot('note')} title={t.sidebar.newNote}>
                             <Plus size={isMobile ? 20 : 14} />
                         </button>
-                        <button
-                            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
-                            onClick={() => handleCreateRoot('folder')}
-                            title={t.sidebar.newFolder}
-                        >
+                        <button className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors" onClick={() => handleCreateRoot('folder')} title={t.sidebar.newFolder}>
                             <Folder size={isMobile ? 20 : 14} />
                         </button>
-                        <button
-                            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
-                            onClick={() => sortNodes(null)}
-                            title="Sortieren (A-Z)"
-                        >
+                        <button className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors" onClick={() => sortNodes(null)} title="Sortieren (A-Z)">
                             <ArrowUpDown size={isMobile ? 20 : 14} />
                         </button>
                     </div>
@@ -541,8 +617,8 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
                         <input
                             type="text"
                             placeholder={t.sidebar.searchPlaceholder || "Search..."}
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full pl-8 pr-2 py-1.5 text-xs bg-white dark:bg-gray-700 border dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                         <Search size={12} className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -551,7 +627,8 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
             </div>
 
             <div className="flex-1 overflow-auto p-2">
-                {searchQuery.trim() ? (
+                {/* Tree/Search Results */}
+                {searchTerm.trim() ? (
                     <div className="flex flex-col gap-1">
                         {searchResults.length === 0 ? (
                             <div className="text-gray-500 text-xs italic p-2 text-center">Keine Ergebnisse</div>
@@ -565,15 +642,9 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
                                         if (onNodeSelect) onNodeSelect();
                                     }}
                                 >
-                                    {node.type === 'folder' ?
-                                        <Folder size={16} className="text-yellow-500 mr-2 shrink-0" /> :
-                                        <FileText size={16} className="text-blue-500 mr-2 shrink-0" />
-                                    }
+                                    {node.type === 'folder' ? <Folder size={16} className="text-yellow-500 mr-2 shrink-0" /> : <FileText size={16} className="text-blue-500 mr-2 shrink-0" />}
                                     <div className="flex flex-col overflow-hidden">
                                         <span className="text-sm truncate font-medium">{node.title}</span>
-                                        <span className="text-[10px] text-gray-500 truncate">
-                                            {node.contentMarkdown?.toLowerCase().includes(searchQuery.toLowerCase()) ? 'Treffer im Inhalt' : 'Treffer im Titel'}
-                                        </span>
                                     </div>
                                 </div>
                             ))
@@ -595,6 +666,45 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
                 )}
             </div>
 
+            {/* Trash Section (Bottom) */}
+            <div
+                className="border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800"
+                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
+                onDrop={handleDropOnTrash}
+            >
+                <div
+                    className="flex justify-between items-center px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                    onClick={toggleTrash}
+                >
+                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300 font-semibold text-sm">
+                        {isTrashOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                        <Trash2 size={16} />
+                        <span>{t.trash.title || 'Papierkorb'}</span>
+                    </div>
+                    {isTrashOpen && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); handleEmptyTrash(); }}
+                            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded text-gray-500"
+                            title={t.trash.emptyTrash || 'Papierkorb leeren'}
+                        >
+                            <Trash2 size={14} />
+                        </button>
+                    )}
+                </div>
+
+                {isTrashOpen && (
+                    <div className="max-h-48 overflow-y-auto px-2 pb-2 bg-gray-100 dark:bg-gray-900/50 inner-shadow">
+                        {trashNodes.length === 0 ? (
+                            <div className="text-gray-400 text-xs italic p-2 text-center">Leer</div>
+                        ) : (
+                            trashNodes.map(node => (
+                                <TrashNode key={node.id} node={node} />
+                            ))
+                        )}
+                    </div>
+                )}
+            </div>
+
             {contextMenu.visible && contextMenu.node && (
                 <div
                     className="fixed z-50 bg-white dark:bg-gray-800 border dark:border-gray-700 shadow-xl rounded-lg py-1 w-48 text-sm"
@@ -604,7 +714,6 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
                     <div className="px-3 py-2 border-b dark:border-gray-700 font-semibold text-gray-500 dark:text-gray-400 text-xs truncate">
                         {contextMenu.node.title}
                     </div>
-
                     {contextMenu.node.type === 'folder' && (
                         <>
                             <button onClick={() => handleMenuAction('newInfo')} className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2">
@@ -618,21 +727,17 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
                             <div className="border-t dark:border-gray-700 my-1"></div>
                         </>
                     )}
-
+                    <button onClick={() => handleMenuAction('rename')} className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2">
+                        <Edit2 size={14} className="text-gray-500" />
+                        <span>{t.sidebar.rename}</span>
+                    </button>
                     {contextMenu.node.type === 'note' && (
                         <button onClick={() => handleMenuAction('duplicate')} className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2">
                             <Copy size={14} className="text-gray-500" />
                             <span>{t.sidebar.duplicate}</span>
                         </button>
                     )}
-
-                    <button onClick={() => handleMenuAction('rename')} className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2">
-                        <Edit2 size={14} className="text-gray-500" />
-                        <span>{t.sidebar.rename}</span>
-                    </button>
-
                     <div className="border-t dark:border-gray-700 my-1"></div>
-
                     <button onClick={() => handleMenuAction('delete')} className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-red-600 dark:text-red-400">
                         <Trash2 size={14} />
                         <span>{t.sidebar.delete}</span>

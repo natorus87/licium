@@ -25,7 +25,7 @@ The name also shares its roots with the English word *"to elicit"*—to draw out
 
 > [!CAUTION]  
 > **Development Status: Beta (Stabilized)**  
-> Licium is currently in active development. Recent updates (v0.9.12) have significantly hardened data safety (atomic transactions) and eliminated known race conditions. **Always back up your data.**  
+> Licium is currently in active development. Recent updates (v0.9.15) have significantly hardened data safety (atomic transactions) and eliminated known race conditions (Whisper/Autosave). **Always back up your data.**  
 > 
 > **Editor Update**  
 > Licium now utilizes the `@licium` scoped editor packages (a maintained fork of Toast UI) to ensure stability and support modern features like Tailwind dark mode integration.
@@ -47,6 +47,7 @@ Licium features a clean, professional interface with automatic **Dark Mode** sup
 ### 📝 Core Editor & Note Management
 - **WYSIWYG Markdown Editor**: Powered by the `@licium` editor (maintained fork of Toast UI), giving you a rich editing experience while maintaining full Markdown compatibility.
 - **Tree-Based Organization**: Organize your notes hierarchically with folders and files. Supports **Drag-and-Drop** functionality for intuitive restructuring and reordering.
+- **Trash & Recovery**: Built-in Recycle Bin ("Papierkorb") with soft-delete, auto-cleanup (30 days), and full drag-and-drop restore capabilities.
 - **Robust Persistence**: Notes are securely stored in a PostgreSQL database with a reliable saving mechanism that handles network latency and rapid switching.
 - **Image Handling**: Drag & drop or paste images directly into your notes. Includes a custom context menu for resizing (Small/Medium/Large).
 - **Multimedia Support**: YouTube links are automatically converted into inline, playable video widgets.

@@ -1,5 +1,11 @@
 export const translations = {
     de: {
+        trash: {
+            title: 'Papierkorb',
+            emptyTrash: 'Papierkorb leeren',
+            restore: 'Wiederherstellen',
+            deletePermanently: 'Endgültig löschen'
+        },
         general: {
             loading: 'Laden...',
             save: 'Speichern',
@@ -262,6 +268,12 @@ export const translations = {
         }
     },
     en: {
+        trash: {
+            title: 'Trash',
+            emptyTrash: 'Empty Trash',
+            restore: 'Restore',
+            deletePermanently: 'Delete Permanently'
+        },
         general: {
             loading: 'Loading...',
             save: 'Save',
@@ -520,6 +532,12 @@ export const translations = {
         }
     },
     fr: {
+        trash: {
+            title: 'Corbeille',
+            emptyTrash: 'Vider la corbeille',
+            restore: 'Restaurer',
+            deletePermanently: 'Supprimer définitivement'
+        },
         general: {
             loading: 'Chargement...',
             save: 'Enregistrer',
@@ -778,6 +796,12 @@ export const translations = {
         }
     },
     it: {
+        trash: {
+            title: 'Cestino',
+            emptyTrash: 'Svuota cestino',
+            restore: 'Ripristina',
+            deletePermanently: 'Elimina definitivamente'
+        },
         general: {
             loading: 'Caricamento...',
             save: 'Salva',
@@ -1036,6 +1060,12 @@ export const translations = {
         }
     },
     es: {
+        trash: {
+            title: 'Papelera',
+            emptyTrash: 'Vaciar papelera',
+            restore: 'Restaurar',
+            deletePermanently: 'Eliminar permanentemente'
+        },
         general: {
             loading: 'Cargando...',
             save: 'Guardar',
@@ -1294,6 +1324,12 @@ export const translations = {
         }
     },
     nl: {
+        trash: {
+            title: 'Prullenbak',
+            emptyTrash: 'Prullenbak legen',
+            restore: 'Herstellen',
+            deletePermanently: 'Definitief verwijderen'
+        },
         general: {
             loading: 'Laden...',
             save: 'Opslaan',

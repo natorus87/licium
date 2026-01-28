@@ -1,7 +1,7 @@
 {
   "name": "licium-client",
   "private": true,
-  "version": "0.9.13",
+  "version": "0.9.15",
   "type": "module",
   "scripts": {
     "dev": "vite",

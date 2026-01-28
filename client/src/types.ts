@@ -10,6 +10,7 @@ export interface NoteNode {
     createdAt: string;
     updatedAt: string;
     position?: number;
+    deletedAt?: string;
 }
 
 export interface User {

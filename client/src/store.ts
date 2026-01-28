@@ -14,6 +14,7 @@ interface AppState {
     isCheckingAuth: boolean;
 
     tree: NoteNode[];
+    trashNodes: NoteNode[]; // New Trash State
     selectedNoteId: string | null;
     selectedNoteContent: string | null;
     selectedNoteTitle: string | null;
@@ -64,6 +65,12 @@ interface AppState {
     moveNode: (id: string, parentId: string | null) => Promise<void>;
     reorderNodes: (updates: { id: string; parentId: string | null; position: number }[]) => Promise<void>;
     sortNodes: (parentId: string | null) => Promise<void>;
+
+    // Trash Actions
+    fetchTrash: () => Promise<void>;
+    restoreNode: (id: string) => Promise<void>;
+    emptyTrash: () => Promise<void>;
+    deleteNodePermanently: (id: string) => Promise<void>;
 
     // Chat
     sendChatMessage: (message: string, mode?: 'chat' | 'summarize' | 'rewrite' | 'structure', useSearch?: boolean, useContext?: boolean, includeNoteContent?: boolean, label?: string) => Promise<void>;
@@ -205,6 +212,7 @@ export const useStore = create<AppState>((set, get) => ({
     isCheckingAuth: true,
 
     tree: [],
+    trashNodes: [],
     selectedNoteId: null,
     selectedNoteContent: null,
     selectedNoteTitle: null,
@@ -346,6 +354,30 @@ export const useStore = create<AppState>((set, get) => ({
         } catch (error) {
             console.error("Failed to fetch tree:", error);
         }
+    },
+
+    // Trash functionality
+    fetchTrash: async () => {
+        try {
+            const res = await axios.get(`${API_URL}/trash`, { withCredentials: true });
+            set({ trashNodes: res.data || [] });
+        } catch (error) {
+            console.error('Failed to fetch trash:', error);
+            set({ trashNodes: [] });
+        }
+    },
+    restoreNode: async (id) => {
+        await axios.post(`${API_URL}/trash/${id}/restore`, {}, { withCredentials: true });
+        await get().fetchTree();
+        await get().fetchTrash();
+    },
+    emptyTrash: async () => {
+        await axios.delete(`${API_URL}/trash`, { withCredentials: true });
+        await get().fetchTrash();
+    },
+    deleteNodePermanently: async (id) => {
+        await axios.delete(`${API_URL}/trash/${id}`, { withCredentials: true });
+        await get().fetchTrash();
     },
 
     selectNote: (node) => {

@@ -182,6 +182,9 @@ The application is designed to be domain-agnostic but defaults to `licium.local`
 -   **Cloud Sync**:
     -   **Feature**: Custom prompts are synchronized across devices via the backend (`user_settings` table).
     -   **Migration**: LocalStorage prompts are automatically uploaded to the server on first login.
+-   **Input UX**:
+    -   **Auto-Expanding**: Chat input field uses a `textarea` that grows with content (up to ~6 lines) to support long prompts.
+    -   **Shortcuts**: `Enter` to send, `Shift+Enter` for new lines.
 
 ### File Management
 - **Explorer**: Tree view with Drag & Drop (Optimized Stacked Layout).
@@ -469,6 +472,11 @@ location = /apple-touch-icon.png {
 -   When `setMarkdown` is called programmatically (to sync state), `isInternalUpdate` is set to `true`.
 -   The `onChange` handler checks this flag and aborts immediately if true, preventing the autosave loop.
 
+#### Variant: Whisper Transcription
+**Problem**: Transcribed text was disappearing on reload (Empty Note).
+**Cause**: `handleTranscription` triggered an immediate save, but an existing debounced autosave (triggered by `insertText`) would fire *after* the immediate save, often with stale or empty state if the editor hadn't fully synced.
+**Solution**: Explicitly cleared `saveTimeoutRef.current` (debounced timer) inside `handleTranscription` before performing the atomic store/backend update.
+
 ### Mobile Settings Tab Overflow
 
 **Problem**: On mobile devices, the Settings tab bar was cut off, making "Users" and "Account" tabs inaccessible.
@@ -638,6 +646,27 @@ Features related to the Sidebar/Explorer file tree.
 - **Solution**:
   - **Cycle Detection**: The backend (`PUT /notes/reorder`) builds a temporary ancestor map of the move target. If the target's parent chain includes the node being moved, the operation is aborted.
   - **ACID Transactions**: All reordering operations are wrapped in `BEGIN ... COMMIT/ROLLBACK` blocks. If any part of the move fails (e.g., cycle detected), the database rolls back to its previous state, preventing partial updates and "orphaned" nodes.
+
+### Trash & Soft Deletes
+- **Architecture**:
+    - **Database**: `notes` table has `deleted_at` TIMESTAMP column (nullable).
+    - **Soft Delete**: `DELETE /notes/:id` recursively sets `deleted_at = NOW()` for the node and all its descendants.
+    - **Auto-Cleanup**: On server startup, a job deletes rows where `deleted_at < NOW() - 30 days`.
+- **Restore Logic**:
+    - **Recursive**: Restoring a folder restores all its children.
+    - **Orphan Handling**: If a restored node's parent is still in the trash, the node is moved to the Root level (`parent_id = NULL`) to ensure visibility in the tree.
+- **UI Implementation**:
+    - **Trash Section**: Specialized `TrashNode` components rendered in a separate collapsible section at the bottom of `TreeView`.
+    - **Drag & Drop**:
+        - Dragging a node to the Trash section triggers a soft delete.
+        - Dragging a node *from* the Trash into the Tree (Root or Folder) triggers a restore + move operation.
+
+### Screen Wake Lock
+- **Purpose**: Prevent the device screen from dimming/locking while the user is reading or thinking (specifically on mobile/tablet).
+- **Implementation**:
+    - Uses the **Screen Wake Lock API** (`navigator.wakeLock.request('screen')`).
+    - **Hook**: `useWakeLock` in `App.tsx` requests the lock on mount and re-requests it whenever the document visibility changes (e.g., switching tabs and coming back).
+    - **Meta Tag**: Added `<meta name="mobile-web-app-capable" content="yes">` to `index.html` to avoid deprecated API warnings on some Android browsers.
 
 ### Startup Race Condition
 - **Problem**: On slow connections, the Editor component might initialize and trigger an "Autosave" (sending an empty string) before the `fetchNoteContent` async call completes.

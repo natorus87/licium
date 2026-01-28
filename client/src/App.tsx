@@ -21,7 +21,7 @@ const useWakeLock = () => {
       try {
         if ('wakeLock' in navigator) {
           wakeLock = await (navigator as any).wakeLock.request('screen');
-          console.log('Wake Lock is active');
+          // console.log('Wake Lock is active');
         }
       } catch (err: any) {
         console.warn(`Wake Lock request failed: ${err.name}, ${err.message}`);

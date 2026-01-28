@@ -1,47 +1,69 @@
-import express from 'express';
-import { v4 as uuidv4 } from 'uuid';
-
-import { query } from './db';
-import { registerUser, loginUser, getUserByIdAsync, resetPassword } from './auth';
-import { handleChat } from './llm';
-import { embeddingService } from './services/embeddingService';
-import multer from 'multer';
-import axios from 'axios';
-import rateLimit from 'express-rate-limit';
-
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const uuid_1 = require("uuid");
+const db_1 = require("./db");
+const auth_1 = require("./auth");
+const llm_1 = require("./llm");
+const embeddingService_1 = require("./services/embeddingService");
+const multer_1 = __importDefault(require("multer"));
+const axios_1 = __importDefault(require("axios"));
+const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 // Configure Multer for memory storage
-const upload = multer({
-    storage: multer.memoryStorage(),
+const upload = (0, multer_1.default)({
+    storage: multer_1.default.memoryStorage(),
     limits: { fileSize: 100 * 1024 * 1024 } // 100MB limit (approx 30m+ of high quality audio)
 });
-
-const router = express.Router();
-
-// Extend Express Session type
-declare module 'express-session' {
-    interface SessionData {
-        userId?: number;
-    }
-}
-
-
-
+const router = express_1.default.Router();
 // Middleware to check if user is authenticated (Session ONLY)
-const requireAuth = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+const requireAuth = async (req, res, next) => {
     // SECURITY FIX: Removed Bearer Token impersonation. 
     // All client API access must be authenticated via valid Session Cookie.
-
     if (req.session && req.session.userId) {
         return next();
     }
-
     res.status(401).json({ error: 'Unauthorized' });
 };
-
 // Middleware to check if user is admin
-const requireAdmin = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+const requireAdmin = async (req, res, next) => {
     if (req.session && req.session.userId) {
-        const user = await getUserByIdAsync(req.session.userId);
+        const user = await (0, auth_1.getUserByIdAsync)(req.session.userId);
         if (user && user.role === 'admin') {
             next();
             return;
@@ -49,75 +71,63 @@ const requireAdmin = async (req: express.Request, res: express.Response, next: e
     }
     res.status(403).json({ error: 'Forbidden: Admin access required' });
 };
-
 // Helper: Background Embedding Update
-async function updateNoteEmbeddings(noteId: string, content: string) {
-    if (!content) return;
-
+async function updateNoteEmbeddings(noteId, content) {
+    if (!content)
+        return;
     try {
-        const hash = embeddingService.calculateHash(content);
-
+        const hash = embeddingService_1.embeddingService.calculateHash(content);
         // Check current hash
-        const res = await query('SELECT content_hash FROM notes WHERE id = $1', [noteId]);
+        const res = await (0, db_1.query)('SELECT content_hash FROM notes WHERE id = $1', [noteId]);
         if (res.rows.length > 0 && res.rows[0].content_hash === hash) {
             // No content change (or at least same hash)
             return;
         }
-
         console.log(`[RAG] Updating embeddings for note ${noteId}...`);
-
         // Fetch Embedding Config from DB
-        const settingsRes = await query("SELECT value FROM settings WHERE key = 'llm_config'");
+        const settingsRes = await (0, db_1.query)("SELECT value FROM settings WHERE key = 'llm_config'");
         let embeddingConfig = null;
         if (settingsRes.rows[0]) {
             const dbValue = JSON.parse(settingsRes.rows[0].value);
             // Check for embeddingProviderId
             if (dbValue.embeddingProviderId && dbValue.providers) {
-                embeddingConfig = dbValue.providers.find((p: any) => p.id === dbValue.embeddingProviderId);
+                embeddingConfig = dbValue.providers.find((p) => p.id === dbValue.embeddingProviderId);
             }
             // Fallback to active provider if not explicitly set
             if (!embeddingConfig && dbValue.activeProviderId && dbValue.providers) {
-                embeddingConfig = dbValue.providers.find((p: any) => p.id === dbValue.activeProviderId);
+                embeddingConfig = dbValue.providers.find((p) => p.id === dbValue.activeProviderId);
             }
         }
-
-
         // Update Hash
-        await query('UPDATE notes SET content_hash = $1 WHERE id = $2', [hash, noteId]);
-
+        await (0, db_1.query)('UPDATE notes SET content_hash = $1 WHERE id = $2', [hash, noteId]);
         // Generate Embeddings
-        const chunks = embeddingService.chunkText(content);
-
+        const chunks = embeddingService_1.embeddingService.chunkText(content);
         // Delete old embeddings
-        await query('DELETE FROM note_embeddings WHERE note_id = $1', [noteId]);
-
+        await (0, db_1.query)('DELETE FROM note_embeddings WHERE note_id = $1', [noteId]);
         // Insert new ones (Sequential for now to be nice to API limits)
         let idx = 0;
         for (const chunk of chunks) {
             try {
-                const vector = await embeddingService.getEmbedding(chunk, embeddingConfig);
+                const vector = await embeddingService_1.embeddingService.getEmbedding(chunk, embeddingConfig);
                 // Postgres params cannot handle raw vector string directly sometimes depending on driver version, 
                 // but pgvector package suggests simply passing the string representation '[...]'
-                await query(
-                    'INSERT INTO note_embeddings (note_id, chunk_index, chunk_content, embedding) VALUES ($1, $2, $3, $4)',
-                    [noteId, idx++, chunk, embeddingService.toSqlVector(vector)]
-                );
-            } catch (err) {
+                await (0, db_1.query)('INSERT INTO note_embeddings (note_id, chunk_index, chunk_content, embedding) VALUES ($1, $2, $3, $4)', [noteId, idx++, chunk, embeddingService_1.embeddingService.toSqlVector(vector)]);
+            }
+            catch (err) {
                 console.error(`[RAG] Failed to embed chunk ${idx} for note ${noteId}:`, err);
             }
         }
         console.log(`[RAG] Finished updating embeddings for note ${noteId}`);
-    } catch (error) {
+    }
+    catch (error) {
         console.error('[RAG] Error in background update:', error);
     }
 }
-
 // Auth Routes
 router.post('/register', async (req, res) => {
     // Check if registration is enabled
-    const result = await query("SELECT value FROM settings WHERE key = 'registration_enabled'");
+    const result = await (0, db_1.query)("SELECT value FROM settings WHERE key = 'registration_enabled'");
     const registrationEnabled = result.rows.length > 0 ? result.rows[0].value === 'true' : true; // Default to true if not set
-
     // If disabled, only allow if user is already an admin (creating another user)
     if (!registrationEnabled) {
         if (!req.session?.userId) {
@@ -128,75 +138,71 @@ router.post('/register', async (req, res) => {
         // This route is for PUBLIC registration.
         return res.status(403).json({ error: 'Registration is currently disabled.' });
     }
-
     const { username, password } = req.body;
     if (!username || !password) {
         return res.status(400).json({ error: 'Username and password are required' });
     }
-
-    const user = await registerUser(username, password);
+    const user = await (0, auth_1.registerUser)(username, password);
     if (user) {
         req.session.userId = user.id;
         res.json(user);
-    } else {
+    }
+    else {
         res.status(400).json({ error: 'Username already exists' });
     }
 });
-
-const loginLimiter = rateLimit({
+const loginLimiter = (0, express_rate_limit_1.default)({
     windowMs: 60 * 1000, // 1 minute
     max: 20, // Limit each IP to 20 login requests per windowMs
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: 'Too many login attempts, please try again after 1 minute' }
 });
-
 router.post('/login', loginLimiter, async (req, res) => {
     const { username, password } = req.body;
-    const user = await loginUser(username, password);
-
+    const user = await (0, auth_1.loginUser)(username, password);
     if (user) {
         req.session.userId = user.id;
         res.json(user);
-    } else {
+    }
+    else {
         res.status(401).json({ error: 'Invalid credentials' });
     }
 });
-
 router.post('/logout', (req, res) => {
     req.session.destroy(() => {
         res.json({ message: 'Logged out' });
     });
 });
-
 router.get('/me', async (req, res) => {
     if (req.session.userId) {
-        const user = await getUserByIdAsync(req.session.userId);
+        const user = await (0, auth_1.getUserByIdAsync)(req.session.userId);
         if (user) {
             res.json(user);
-        } else {
+        }
+        else {
             res.status(401).json({ error: 'User not found' });
         }
-    } else {
+    }
+    else {
         res.status(401).json({ error: 'Not authenticated' });
     }
 });
-
 router.post('/auth/reset-password', requireAuth, async (req, res) => {
     const { newPassword } = req.body;
-    if (!newPassword) return res.status(400).json({ error: 'New password required' });
-
-    const success = await resetPassword(req.session.userId!, newPassword);
+    if (!newPassword)
+        return res.status(400).json({ error: 'New password required' });
+    const success = await (0, auth_1.resetPassword)(req.session.userId, newPassword);
     if (success) {
         res.json({ message: 'Password updated' });
-    } else {
+    }
+    else {
         res.status(500).json({ error: 'Failed to update password' });
     }
 });
-
 // Admin: User Management Routes
 router.get('/users', requireAdmin, async (req, res) => {
-    const result = await query("SELECT id, username, role, created_at FROM users");
+    const result = await (0, db_1.query)("SELECT id, username, role, created_at FROM users");
     const users = result.rows.map(row => ({
         id: row.id,
         username: row.username,
@@ -205,37 +211,35 @@ router.get('/users', requireAdmin, async (req, res) => {
     }));
     res.json(users);
 });
-
 router.post('/users', requireAdmin, async (req, res) => {
     const { username, password } = req.body;
-    const user = await registerUser(username, password); // This handles hashing and DB insert
+    const user = await (0, auth_1.registerUser)(username, password); // This handles hashing and DB insert
     if (user) {
         res.json(user);
-    } else {
+    }
+    else {
         res.status(400).json({ error: 'Failed to create user' });
     }
 });
-
 router.delete('/users/:id', requireAdmin, async (req, res) => {
     const userId = parseInt(req.params.id);
     if (userId === req.session.userId) {
         return res.status(400).json({ error: 'Cannot delete yourself' });
     }
-    await query('DELETE FROM users WHERE id = $1', [userId]);
+    await (0, db_1.query)('DELETE FROM users WHERE id = $1', [userId]);
     res.json({ message: 'User deleted' });
 });
-
 router.post('/users/:id/reset-password', requireAdmin, async (req, res) => {
     const userId = parseInt(req.params.id);
     const { newPassword } = req.body;
-    const success = await resetPassword(userId, newPassword);
+    const success = await (0, auth_1.resetPassword)(userId, newPassword);
     if (success) {
         res.json({ message: 'Password reset successful' });
-    } else {
+    }
+    else {
         res.status(500).json({ error: 'Failed to reset password' });
     }
 });
-
 router.put('/users/:id/role', requireAdmin, async (req, res) => {
     const userId = parseInt(req.params.id);
     const { role } = req.body;
@@ -245,65 +249,48 @@ router.put('/users/:id/role', requireAdmin, async (req, res) => {
     if (!['admin', 'user'].includes(role)) {
         return res.status(400).json({ error: 'Invalid role' });
     }
-    await query('UPDATE users SET role = $1 WHERE id = $2', [role, userId]);
+    await (0, db_1.query)('UPDATE users SET role = $1 WHERE id = $2', [role, userId]);
     res.json({ message: 'Role updated' });
 });
-
 // Admin: Global Settings Routes
 router.get('/settings/llm', requireAuth, async (req, res) => {
-    const result = await query("SELECT value FROM settings WHERE key = 'llm_config'");
+    const result = await (0, db_1.query)("SELECT value FROM settings WHERE key = 'llm_config'");
     if (result.rows[0]) {
         res.json(JSON.parse(result.rows[0].value));
-    } else {
+    }
+    else {
         res.json(null);
     }
 });
-
 router.put('/settings/llm', requireAdmin, async (req, res) => {
     const config = req.body;
     // Postgres UPSERT
-    await query(
-        "INSERT INTO settings (key, value) VALUES ('llm_config', $1) ON CONFLICT (key) DO UPDATE SET value = $1",
-        [JSON.stringify(config)]
-    );
+    await (0, db_1.query)("INSERT INTO settings (key, value) VALUES ('llm_config', $1) ON CONFLICT (key) DO UPDATE SET value = $1", [JSON.stringify(config)]);
     res.json({ message: 'Settings saved' });
 });
-
 router.get('/settings/registration', async (req, res) => {
-    const result = await query("SELECT value FROM settings WHERE key = 'registration_enabled'");
+    const result = await (0, db_1.query)("SELECT value FROM settings WHERE key = 'registration_enabled'");
     const enabled = result.rows.length > 0 ? result.rows[0].value === 'true' : true;
     res.json({ enabled });
 });
-
 router.put('/settings/registration', requireAdmin, async (req, res) => {
     const { enabled } = req.body;
-    await query(
-        "INSERT INTO settings (key, value) VALUES ('registration_enabled', $1) ON CONFLICT (key) DO UPDATE SET value = $1",
-        [String(enabled)]
-    );
+    await (0, db_1.query)("INSERT INTO settings (key, value) VALUES ('registration_enabled', $1) ON CONFLICT (key) DO UPDATE SET value = $1", [String(enabled)]);
     res.json({ message: 'Registration settings updated' });
 });
-
 // Note Routes
 router.get('/tree', requireAuth, async (req, res) => {
     const userId = req.session.userId;
-
     if (!userId) {
         return res.status(401).json({ error: 'User not authenticated' });
     }
-
     // Get all notes for user (Sort by position, then by updated_at)
-    const result = await query(
-        'SELECT id, parent_id, type, title, content_markdown, created_at, updated_at, position FROM notes WHERE user_id = $1 AND deleted_at IS NULL ORDER BY position ASC, title ASC',
-        [userId]
-    );
-
+    const result = await (0, db_1.query)('SELECT id, parent_id, type, title, content_markdown, created_at, updated_at, position FROM notes WHERE user_id = $1 AND deleted_at IS NULL ORDER BY position ASC, title ASC', [userId]);
     if (result.rows.length === 0) {
         return res.json([]);
     }
-
     const rows = result.rows;
-    const nodes: any[] = rows.map(row => ({
+    const nodes = rows.map(row => ({
         id: row.id,
         parentId: row.parent_id,
         type: row.type,
@@ -314,55 +301,45 @@ router.get('/tree', requireAuth, async (req, res) => {
         position: row.position || 0,
         children: []
     }));
-
     // Build tree
     const nodeMap = new Map();
-    const rootNodes: any[] = [];
-
+    const rootNodes = [];
     nodes.forEach(node => nodeMap.set(node.id, node));
-
     nodes.forEach(node => {
         if (node.parentId) {
             const parent = nodeMap.get(node.parentId);
             if (parent) {
                 parent.children.push(node);
-            } else {
+            }
+            else {
                 rootNodes.push(node);
             }
-        } else {
+        }
+        else {
             rootNodes.push(node);
         }
     });
-
     res.json(rootNodes);
 });
-
 // Reorder Notes - MUST be at top level, NOT nested inside another route!
 router.put('/notes/reorder', requireAuth, async (req, res) => {
     const { updates } = req.body;
     const userId = req.session.userId;
-
     if (!Array.isArray(updates)) {
         return res.status(400).json({ error: 'Invalid updates format' });
     }
-
-    const client = await (await import('./db')).getDb().connect();
-
+    const client = await (await Promise.resolve().then(() => __importStar(require('./db')))).getDb().connect();
     try {
         await client.query('BEGIN');
-
         // 1. Pre-fetch structure for cycle detection if any parentId is changing
         // Optimization: Only fetch if we detect a parent change in the batch?
         // For reorder, usually we are just changing positions, but drag-drop might change parent.
-
         const allNotesResult = await client.query('SELECT id, parent_id FROM notes WHERE user_id = $1', [userId]);
-        const nodeMap = new Map<string, string | null>();
+        const nodeMap = new Map();
         allNotesResult.rows.forEach(row => nodeMap.set(row.id, row.parent_id));
-
         for (const update of updates) {
             // Cycle Check
             let currentParentId = update.parentId;
-
             // Check if moving into itself or its descendants
             // We traverse up from the NEW parent. If we hit the node being moved, it's a cycle.
             while (currentParentId) {
@@ -371,121 +348,92 @@ router.put('/notes/reorder', requireAuth, async (req, res) => {
                 }
                 currentParentId = nodeMap.get(currentParentId) || null;
             }
-
-            await client.query(
-                'UPDATE notes SET position = $1, parent_id = $2 WHERE id = $3 AND user_id = $4',
-                [update.position, update.parentId || null, update.id, userId]
-            );
-
+            await client.query('UPDATE notes SET position = $1, parent_id = $2 WHERE id = $3 AND user_id = $4', [update.position, update.parentId || null, update.id, userId]);
             // Update map for next iteration in case multiple moves affect each other
             nodeMap.set(update.id, update.parentId || null);
         }
-
         await client.query('COMMIT');
         res.json({ message: 'Updated' });
-    } catch (e: any) {
+    }
+    catch (e) {
         await client.query('ROLLBACK');
         console.error("Reorder failed", e);
         res.status(500).json({ error: e.message || 'Reorder failed' });
-    } finally {
+    }
+    finally {
         client.release();
     }
 });
-
 // Auto-Sort Notes: Numbers first, then alphabetical
 router.post('/notes/sort', requireAuth, async (req, res) => {
     const { parentId } = req.body; // null for root level
     const userId = req.session.userId;
-
     try {
         // Fetch all notes at this level
-        const result = await query(
-            'SELECT id, title FROM notes WHERE user_id = $1 AND parent_id IS NOT DISTINCT FROM $2',
-            [userId, parentId]
-        );
-
+        const result = await (0, db_1.query)('SELECT id, title FROM notes WHERE user_id = $1 AND parent_id IS NOT DISTINCT FROM $2', [userId, parentId]);
         if (result.rows.length === 0) {
             return res.json({ message: 'Nothing to sort' });
         }
-
         // Sort: Numbers first (by numeric value), then alphabetical
         const sorted = result.rows.sort((a, b) => {
             const aTitle = a.title || '';
             const bTitle = b.title || '';
-
             // Check if titles start with numbers
             const aNumMatch = aTitle.match(/^(\d+)/);
             const bNumMatch = bTitle.match(/^(\d+)/);
-
             if (aNumMatch && bNumMatch) {
                 // Both start with numbers - compare numerically
                 return parseInt(aNumMatch[1]) - parseInt(bNumMatch[1]);
-            } else if (aNumMatch) {
+            }
+            else if (aNumMatch) {
                 // Only A starts with number - A comes first
                 return -1;
-            } else if (bNumMatch) {
+            }
+            else if (bNumMatch) {
                 // Only B starts with number - B comes first
                 return 1;
-            } else {
+            }
+            else {
                 // Neither starts with number - alphabetical (case-insensitive)
                 return aTitle.toLowerCase().localeCompare(bTitle.toLowerCase(), 'de');
             }
         });
-
         // Assign new positions
         for (let i = 0; i < sorted.length; i++) {
-            await query(
-                'UPDATE notes SET position = $1 WHERE id = $2 AND user_id = $3',
-                [(i + 1) * 65536, sorted[i].id, userId]
-            );
+            await (0, db_1.query)('UPDATE notes SET position = $1 WHERE id = $2 AND user_id = $3', [(i + 1) * 65536, sorted[i].id, userId]);
         }
-
         res.json({ message: 'Sorted' });
-    } catch (e) {
+    }
+    catch (e) {
         console.error("Sort failed", e);
         res.status(500).json({ error: 'Sort failed' });
     }
 });
-
 router.post('/notes', requireAuth, async (req, res) => {
     let { id, parentId, type, title } = req.body;
     const userId = req.session.userId;
-
     if (!id) {
-        id = uuidv4();
+        id = (0, uuid_1.v4)();
     }
-
-    await query(
-        'INSERT INTO notes (id, user_id, parent_id, type, title) VALUES ($1, $2, $3, $4, $5)',
-        [id, userId, parentId, type, title]
-    );
+    await (0, db_1.query)('INSERT INTO notes (id, user_id, parent_id, type, title) VALUES ($1, $2, $3, $4, $5)', [id, userId, parentId, type, title]);
     res.json({ message: 'Created', id });
 });
-
 router.put('/notes/:id', requireAuth, async (req, res) => {
     const { title, content } = req.body;
     const { id } = req.params;
     const userId = req.session.userId;
-
-    const client = await (await import('./db')).getDb().connect();
-
+    const client = await (await Promise.resolve().then(() => __importStar(require('./db')))).getDb().connect();
     try {
         await client.query('BEGIN');
-
         // Version History: Before updating, save current state
         try {
             const currentNoteResult = await client.query('SELECT title, content_markdown FROM notes WHERE id = $1 AND user_id = $2', [id, userId]);
             if (currentNoteResult.rows.length > 0) {
                 const currentNote = currentNoteResult.rows[0];
-
                 // Only save version if content is changing (simple check)
                 if (content !== undefined && content !== currentNote.content_markdown) {
                     // 1. Save current version
-                    await client.query(
-                        'INSERT INTO note_versions (note_id, user_id, title, content_markdown) VALUES ($1, $2, $3, $4)',
-                        [id, userId, currentNote.title, currentNote.content_markdown || '']
-                    );
-
+                    await client.query('INSERT INTO note_versions (note_id, user_id, title, content_markdown) VALUES ($1, $2, $3, $4)', [id, userId, currentNote.title, currentNote.content_markdown || '']);
                     // 2. Prune old versions (Max 10 per note)
                     await client.query(`
                         DELETE FROM note_versions
@@ -498,147 +446,104 @@ router.put('/notes/:id', requireAuth, async (req, res) => {
                     `, [id]);
                 }
             }
-        } catch (err) {
+        }
+        catch (err) {
             console.error("Failed to save version history:", err);
             throw new Error("Failed to save version history. Update aborted to prevent data loss.");
         }
-
         if (title !== undefined) {
             await client.query('UPDATE notes SET title = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND user_id = $3', [title, id, userId]);
         }
         if (content !== undefined) {
             await client.query('UPDATE notes SET content_markdown = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND user_id = $3', [content, id, userId]);
-
             // Trigger background embedding update
             updateNoteEmbeddings(id, content);
         }
-
         await client.query('COMMIT');
         res.json({ message: 'Updated' });
-    } catch (e: any) {
+    }
+    catch (e) {
         await client.query('ROLLBACK');
         console.error("Update note failed:", e);
         res.status(500).json({ error: e.message || 'Update failed' });
-    } finally {
+    }
+    finally {
         client.release();
     }
 });
-
 router.get('/notes/:id', requireAuth, async (req, res) => {
     const { id } = req.params;
     const userId = req.session.userId;
-
-    const result = await query(
-        'SELECT id, parent_id, type, title, content_markdown, created_at, updated_at FROM notes WHERE id = $1 AND user_id = $2',
-        [id, userId]
-    );
-
+    const result = await (0, db_1.query)('SELECT id, parent_id, type, title, content_markdown, created_at, updated_at FROM notes WHERE id = $1 AND user_id = $2', [id, userId]);
     if (result.rows.length === 0) {
         return res.status(404).json({ error: 'Note not found' });
     }
-
     res.json(result.rows[0]);
 });
-
 router.get('/notes/:id/versions', requireAuth, async (req, res) => {
     const { id } = req.params;
     const userId = req.session.userId;
-
-    const result = await query(
-        'SELECT id, created_at FROM note_versions WHERE note_id = $1 AND user_id = $2 ORDER BY created_at DESC',
-        [id, userId]
-    );
-
+    const result = await (0, db_1.query)('SELECT id, created_at FROM note_versions WHERE note_id = $1 AND user_id = $2 ORDER BY created_at DESC', [id, userId]);
     res.json(result.rows); // Return simplified list for UI
 });
-
 router.post('/notes/:id/restore/:versionId', requireAuth, async (req, res) => {
     const { id, versionId } = req.params;
     const userId = req.session.userId;
-
-    const versionResult = await query(
-        'SELECT title, content_markdown FROM note_versions WHERE id = $1 AND note_id = $2 AND user_id = $3',
-        [versionId, id, userId]
-    );
-
+    const versionResult = await (0, db_1.query)('SELECT title, content_markdown FROM note_versions WHERE id = $1 AND note_id = $2 AND user_id = $3', [versionId, id, userId]);
     if (versionResult.rows.length === 0) {
         return res.status(404).json({ error: 'Version not found' });
     }
-
     const version = versionResult.rows[0];
-
     // Restore content to main table
-    await query(
-        'UPDATE notes SET content_markdown = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND user_id = $3',
-        [version.content_markdown, id, userId]
-    );
-
+    await (0, db_1.query)('UPDATE notes SET content_markdown = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND user_id = $3', [version.content_markdown, id, userId]);
     // Optionally: We could also create a new version of the state *before* restore, but the user just requested a restore.
     // The previous state is effectively lost unless we version it too.
     // For now, simple restore implies overwriting current state with old state.
     // (Ideally, the 'overwrite' action itself triggers the PUT logic above if called via PUT, but here we do direct SQL)
     // Let's manually trigger a "save current before restore" to be safe?
     // Actually, let's keep it simple: Restore overwrites.
-
     res.json({ message: 'Restored', content: version.content_markdown });
 });
-
 router.post('/notes/:id/duplicate', requireAuth, async (req, res) => {
     const { id } = req.params;
     const userId = req.session.userId;
-
     if (!userId) {
         return res.status(401).json({ error: 'User not authenticated' });
     }
-
     try {
         // Fetch original note
-        const originalResult = await query(
-            'SELECT * FROM notes WHERE id = $1 AND user_id = $2',
-            [id, userId]
-        );
-
+        const originalResult = await (0, db_1.query)('SELECT * FROM notes WHERE id = $1 AND user_id = $2', [id, userId]);
         if (originalResult.rows.length === 0) {
             return res.status(404).json({ error: 'Note not found' });
         }
-
         const original = originalResult.rows[0];
-        const newId = uuidv4();
+        const newId = (0, uuid_1.v4)();
         const newTitle = `${original.title} (Kopie)`;
-
         // Insert duplicate
-        await query(
-            'INSERT INTO notes (id, user_id, parent_id, type, title, content_markdown) VALUES ($1, $2, $3, $4, $5, $6)',
-            [newId, userId, original.parent_id, original.type, newTitle, original.content_markdown]
-        );
-
+        await (0, db_1.query)('INSERT INTO notes (id, user_id, parent_id, type, title, content_markdown) VALUES ($1, $2, $3, $4, $5, $6)', [newId, userId, original.parent_id, original.type, newTitle, original.content_markdown]);
         res.json({ message: 'Duplicated', id: newId });
-    } catch (error) {
+    }
+    catch (error) {
         console.error('Duplicate error:', error);
         res.status(500).json({ error: 'Failed to duplicate note' });
     }
 });
-
 router.put('/notes/:id/move', requireAuth, async (req, res) => {
     const { parentId } = req.body;
     const { id } = req.params;
     const userId = req.session.userId;
-
     if (!userId) {
         return res.status(401).json({ error: 'User not authenticated' });
     }
-
     if (parentId === id) {
         return res.status(400).json({ error: 'Cannot move a folder into itself' });
     }
-
     // Check for cycles if moving a folder
-    const allNotesResult = await query('SELECT id, parent_id FROM notes WHERE user_id = $1', [userId]);
+    const allNotesResult = await (0, db_1.query)('SELECT id, parent_id FROM notes WHERE user_id = $1', [userId]);
     if (allNotesResult.rows.length > 0) {
         const rows = allNotesResult.rows;
-        const nodeMap = new Map<string, string | null>();
+        const nodeMap = new Map();
         rows.forEach(row => nodeMap.set(row.id, row.parent_id));
-
         let currentParentId = parentId;
         while (currentParentId) {
             if (currentParentId === id) {
@@ -647,22 +552,18 @@ router.put('/notes/:id/move', requireAuth, async (req, res) => {
             currentParentId = nodeMap.get(currentParentId) || null;
         }
     }
-
-    await query('UPDATE notes SET parent_id = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND user_id = $3', [parentId, id, userId]);
+    await (0, db_1.query)('UPDATE notes SET parent_id = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND user_id = $3', [parentId, id, userId]);
     res.json({ message: 'Moved' });
 });
-
 router.delete('/notes/:id', requireAuth, async (req, res) => {
     const { id } = req.params;
     const userId = req.session.userId;
-
     if (!userId) {
         return res.status(401).json({ error: 'User not authenticated' });
     }
-
     // Recursive Soft Delete
     try {
-        await query(`
+        await (0, db_1.query)(`
             WITH RECURSIVE target_nodes AS (
                 SELECT id FROM notes WHERE id = $1 AND user_id = $2
                 UNION
@@ -673,51 +574,42 @@ router.delete('/notes/:id', requireAuth, async (req, res) => {
             SET deleted_at = NOW()
             WHERE id IN (SELECT id FROM target_nodes)
         `, [id, userId]);
-
         res.json({ message: 'Moved to trash' });
-    } catch (err) {
+    }
+    catch (err) {
         console.error('Delete error:', err);
         res.status(500).json({ error: 'Failed to delete note' });
     }
 });
-
 // Trash Routes ----------------------------------------------------------------
-
 // Get Trash
 router.get('/trash', requireAuth, async (req, res) => {
     const userId = req.session.userId;
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
-
-    const result = await query(
-        'SELECT id, parent_id, type, title, deleted_at FROM notes WHERE user_id = $1 AND deleted_at IS NOT NULL ORDER BY deleted_at DESC',
-        [userId]
-    );
-
+    if (!userId)
+        return res.status(401).json({ error: 'Unauthorized' });
+    const result = await (0, db_1.query)('SELECT id, parent_id, type, title, deleted_at FROM notes WHERE user_id = $1 AND deleted_at IS NOT NULL ORDER BY deleted_at DESC', [userId]);
     res.json(result.rows);
 });
-
 // Restore Note
 router.post('/trash/:id/restore', requireAuth, async (req, res) => {
     const { id } = req.params;
     const userId = req.session.userId;
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
-
+    if (!userId)
+        return res.status(401).json({ error: 'Unauthorized' });
     try {
         // recursive restore
         // We also need to check if the parent of the restored node is actively deleted.
         // If the parent is still in trash, we should move this node to root (parent_id = NULL)
         // or user will restore it but not see it in the tree.
-
         // 1. Get the node we are restoring to see its parent
-        const nodeRes = await query('SELECT parent_id FROM notes WHERE id = $1 AND user_id = $2', [id, userId]);
-        if (nodeRes.rows.length === 0) return res.status(404).json({ error: 'Note not found' });
-
+        const nodeRes = await (0, db_1.query)('SELECT parent_id FROM notes WHERE id = $1 AND user_id = $2', [id, userId]);
+        if (nodeRes.rows.length === 0)
+            return res.status(404).json({ error: 'Note not found' });
         const parentId = nodeRes.rows[0].parent_id;
         let newParentId = parentId;
-
         // 2. Check if parent is in trash
         if (parentId) {
-            const parentCheck = await query('SELECT deleted_at FROM notes WHERE id = $1', [parentId]);
+            const parentCheck = await (0, db_1.query)('SELECT deleted_at FROM notes WHERE id = $1', [parentId]);
             if (parentCheck.rows.length > 0 && parentCheck.rows[0].deleted_at !== null) {
                 // Parent is also deleted (and we are not restoring it, since user clicked restore on THIS child)
                 // If user restores a folder, we restore all descendants.
@@ -725,7 +617,6 @@ router.post('/trash/:id/restore', requireAuth, async (req, res) => {
                 // WAIT: If we restore a folder, we want to restore its children too.
                 // Let's stick to: Restore this node AND all its descendants. 
                 // AND ensure this node itself is reachable.
-
                 newParentId = null; // Move to root if parent is missing/deleted
             }
             // If parent does not exist at all? (orphaned) -> move to root
@@ -733,9 +624,8 @@ router.post('/trash/:id/restore', requireAuth, async (req, res) => {
                 newParentId = null;
             }
         }
-
         // 3. Recursive Restore
-        await query(`
+        await (0, db_1.query)(`
              WITH RECURSIVE target_nodes AS (
                 SELECT id FROM notes WHERE id = $1 AND user_id = $2
                 UNION
@@ -746,38 +636,33 @@ router.post('/trash/:id/restore', requireAuth, async (req, res) => {
             SET deleted_at = NULL
             WHERE id IN (SELECT id FROM target_nodes)
         `, [id, userId]);
-
         // 4. If we need to re-parent the root of this restore operation
         if (newParentId !== parentId) {
-            await query('UPDATE notes SET parent_id = $1 WHERE id = $2', [newParentId, id]);
+            await (0, db_1.query)('UPDATE notes SET parent_id = $1 WHERE id = $2', [newParentId, id]);
         }
-
         res.json({ message: 'Restored' });
-
-    } catch (err) {
+    }
+    catch (err) {
         console.error('Restore error:', err);
         res.status(500).json({ error: 'Failed to restore' });
     }
 });
-
 // Empty Trash
 router.delete('/trash', requireAuth, async (req, res) => {
     const userId = req.session.userId;
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
-
-    await query('DELETE FROM notes WHERE user_id = $1 AND deleted_at IS NOT NULL', [userId]);
+    if (!userId)
+        return res.status(401).json({ error: 'Unauthorized' });
+    await (0, db_1.query)('DELETE FROM notes WHERE user_id = $1 AND deleted_at IS NOT NULL', [userId]);
     res.json({ message: 'Trash emptied' });
 });
-
 // Delete Permanently
 router.delete('/trash/:id', requireAuth, async (req, res) => {
     const { id } = req.params;
     const userId = req.session.userId;
-
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
-
+    if (!userId)
+        return res.status(401).json({ error: 'Unauthorized' });
     // Recursive Hard Delete
-    await query(`
+    await (0, db_1.query)(`
         WITH RECURSIVE target_nodes AS (
             SELECT id FROM notes WHERE id = $1 AND user_id = $2
             UNION
@@ -786,187 +671,158 @@ router.delete('/trash/:id', requireAuth, async (req, res) => {
         )
         DELETE FROM notes WHERE id IN (SELECT id FROM target_nodes)
     `, [id, userId]);
-
     res.json({ message: 'Permanently deleted' });
 });
-
 // RAG Search Route
 router.post('/rag/search', requireAuth, async (req, res) => {
     const { query: userQuery } = req.body;
-    if (!userQuery) return res.status(400).json({ error: 'Query required' });
-
+    if (!userQuery)
+        return res.status(400).json({ error: 'Query required' });
     try {
         // Fetch Config
-        const settingsRes = await query("SELECT value FROM settings WHERE key = 'llm_config'");
+        const settingsRes = await (0, db_1.query)("SELECT value FROM settings WHERE key = 'llm_config'");
         let embeddingConfig = null;
         if (settingsRes.rows[0]) {
             const dbValue = JSON.parse(settingsRes.rows[0].value);
             if (dbValue.embeddingProviderId && dbValue.providers) {
-                embeddingConfig = dbValue.providers.find((p: any) => p.id === dbValue.embeddingProviderId);
+                embeddingConfig = dbValue.providers.find((p) => p.id === dbValue.embeddingProviderId);
             }
             if (!embeddingConfig && dbValue.activeProviderId && dbValue.providers) {
-                embeddingConfig = dbValue.providers.find((p: any) => p.id === dbValue.activeProviderId);
+                embeddingConfig = dbValue.providers.find((p) => p.id === dbValue.activeProviderId);
             }
         }
-
-        const vector = await embeddingService.getEmbedding(userQuery, embeddingConfig);
-        const sqlVector = embeddingService.toSqlVector(vector);
-
+        const vector = await embeddingService_1.embeddingService.getEmbedding(userQuery, embeddingConfig);
+        const sqlVector = embeddingService_1.embeddingService.toSqlVector(vector);
         // Cosine similarity search (<=> operator)
         // We cast the parameter to vector explicitly: $1::vector
-        const result = await query(
-            `SELECT note_id, chunk_content, 
+        const result = await (0, db_1.query)(`SELECT note_id, chunk_content, 
              1 - (embedding <=> $1) as similarity
              FROM note_embeddings
              ORDER BY embedding <=> $1
-             LIMIT 5`,
-            [sqlVector]
-        );
-
+             LIMIT 5`, [sqlVector]);
         // Fetch Note Titles for better context
         // OR join in the query above. Let's do a join or simple fetch.
         // Let's keep it simple: The client might want titles.
         // We can JOIN notes table.
-        const enrichedResult = await query(
-            `SELECT ne.note_id, n.title, ne.chunk_content, 
+        const enrichedResult = await (0, db_1.query)(`SELECT ne.note_id, n.title, ne.chunk_content, 
              1 - (ne.embedding <=> $1) as similarity
              FROM note_embeddings ne
              JOIN notes n ON ne.note_id = n.id
              WHERE n.user_id = $2
              ORDER BY ne.embedding <=> $1
-             LIMIT 5`,
-            [sqlVector, req.session.userId]
-        );
-
+             LIMIT 5`, [sqlVector, req.session.userId]);
         res.json(enrichedResult.rows);
-    } catch (error: any) {
+    }
+    catch (error) {
         console.error('RAG Search error:', error);
         res.status(500).json({ error: 'Search failed' });
     }
 });
-
 // Chat Route
 router.post('/chat', requireAuth, async (req, res) => {
     try {
         const { messages, noteContent, mode, useSearch, config: clientConfig, language } = req.body;
-
         // Determine LLM config: Use client info if provided (for Multi-LLM), else fallback to global DB default
         let config = clientConfig;
-
         if (!config) {
             // Fetch global LLM config from DB (Legacy/Fallback)
-            const result = await query("SELECT value FROM settings WHERE key = 'llm_config'");
+            const result = await (0, db_1.query)("SELECT value FROM settings WHERE key = 'llm_config'");
             if (result.rows[0]) {
                 const dbValue = JSON.parse(result.rows[0].value);
                 // Handle new format (LLMSettings) vs old format (single provider)
                 if (dbValue.providers && Array.isArray(dbValue.providers)) {
                     // If DB has new format but client didn't send config, pick active or first
                     const activeId = dbValue.activeProviderId;
-                    config = dbValue.providers.find((p: any) => p.id === activeId) || dbValue.providers[0];
-                } else {
+                    config = dbValue.providers.find((p) => p.id === activeId) || dbValue.providers[0];
+                }
+                else {
                     // Old format: dbValue is the provider itself
                     config = dbValue;
                 }
             }
         }
-
         if (!config) {
             return res.status(400).json({ error: "LLM not configured by admin." });
         }
-
-        const response = await handleChat(messages, noteContent, mode, config, useSearch, language);
+        const response = await (0, llm_1.handleChat)(messages, noteContent, mode, config, useSearch, language);
         res.json({ assistantMessage: response });
-    } catch (error: any) {
+    }
+    catch (error) {
         console.error('Chat error:', error);
         res.status(500).json({ error: error.message || 'Failed to get response' });
     }
 });
-
 // Upload Image
 router.post('/upload', upload.single('image'), async (req, res) => {
     console.log(`[Upload] Request received from ${req.ip}`);
-
     if (!req.session?.userId) {
         console.warn('[Upload] Unauthorized');
         return res.status(401).json({ error: 'Unauthorized' });
     }
-
     if (!req.file) {
         console.warn('[Upload] No file');
         return res.status(400).json({ error: 'No file uploaded' });
     }
-
     try {
-        const result = await query(
-            'INSERT INTO images (user_id, data, mime_type) VALUES ($1, $2, $3) RETURNING id',
-            [req.session.userId, req.file.buffer, req.file.mimetype]
-        );
-
+        const result = await (0, db_1.query)('INSERT INTO images (user_id, data, mime_type) VALUES ($1, $2, $3) RETURNING id', [req.session.userId, req.file.buffer, req.file.mimetype]);
         const imageId = result.rows[0].id;
         console.log(`[Upload] Success, id: ${imageId}`);
         res.json({ url: `/api/images/${imageId}` });
-    } catch (error) {
+    }
+    catch (error) {
         console.error('Upload error:', error);
         res.status(500).json({ error: 'Upload failed' });
     }
 });
-
 // Serve Image
 router.get('/images/:id', async (req, res) => {
     try {
-        const result = await query('SELECT data, mime_type FROM images WHERE id = $1', [req.params.id]);
-
+        const result = await (0, db_1.query)('SELECT data, mime_type FROM images WHERE id = $1', [req.params.id]);
         if (result.rows.length === 0) {
             return res.status(404).send('Not found');
         }
-
         const image = result.rows[0];
         res.contentType(image.mime_type);
         res.send(image.data);
-    } catch (error) {
+    }
+    catch (error) {
         console.error('Image fetch error:', error);
         res.status(500).send('Error retrieving image');
     }
 });
-
 // Transcribe Audio (Whisper Proxy) with SSE Keep-Alive
 router.post('/transcribe', requireAuth, upload.single('file'), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: 'No audio file provided' });
     }
-
     // Initialize SSE Headers
     res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
     });
-
     // Send initial status
     res.write(`data: ${JSON.stringify({ status: 'processing' })}\n\n`);
-
     // Setup Keep-Alive Interval
     const keepAlive = setInterval(() => {
         res.write(`data: ${JSON.stringify({ status: 'processing' })}\n\n`);
     }, 10000); // 10 seconds
-
     try {
         // Parse Provider Config
-        let providerConfig: any = null;
+        let providerConfig = null;
         try {
             const configHeader = req.headers['x-audio-config'];
             if (configHeader && typeof configHeader === 'string') {
                 providerConfig = JSON.parse(configHeader);
             }
-        } catch (e) {
+        }
+        catch (e) {
             console.warn('Failed to parse audio config header', e);
         }
-
         // Default to Internal Whisper if no config or type is local
         let targetUrl = 'http://whisper:8000/v1/audio/transcriptions';
-        let headers: any = {};
+        let headers = {};
         let model = null;
-
         if (providerConfig && providerConfig.baseUrl && (providerConfig.type === 'custom' || providerConfig.type === 'openai')) {
             targetUrl = providerConfig.baseUrl;
             if (providerConfig.apiKey) {
@@ -976,103 +832,89 @@ router.post('/transcribe', requireAuth, upload.single('file'), async (req, res) 
                 model = providerConfig.model;
             }
         }
-
         const formData = new FormData();
         const blob = new Blob([new Uint8Array(req.file.buffer)], { type: req.file.mimetype });
         formData.append('file', blob, 'recording.webm');
-
         // Append model if specified (required for OpenAI)
         if (model) {
             formData.append('model', model);
         }
-
         const language = req.body.language || 'de';
         formData.append('language', language);
-
         console.log(`[SSE] Sending audio to ${targetUrl} (Language: ${language}). File size: ${req.file.size} bytes`);
-
         // Await transcription (blocking)
-        const response = await axios.post(targetUrl, formData, {
+        const response = await axios_1.default.post(targetUrl, formData, {
             headers: {
                 ...headers,
                 // axios automatically sets Content-Type for FormData, but sometimes better to let it handle it
             },
             timeout: 1800000 // 30 minutes
         });
-
         console.log(`[SSE] Transcription success (Language: ${language})`);
-
         // Send final result
         res.write(`data: ${JSON.stringify({ status: 'complete', text: response.data.text })}\n\n`);
-    } catch (error: any) {
+    }
+    catch (error) {
         console.error('[SSE] Transcription error:', error.response?.data || error.message);
         res.write(`data: ${JSON.stringify({ status: 'error', error: 'Failed to transcribe audio' })}\n\n`);
-    } finally {
+    }
+    finally {
         clearInterval(keepAlive);
         res.end();
     }
 });
-
 // Check Whisper Service Status
 router.get('/status/whisper', requireAuth, async (req, res) => {
     try {
         // Check if the service is reachable and ready
-        await axios.get('http://whisper:8000/health', { timeout: 2000 });
+        await axios_1.default.get('http://whisper:8000/health', { timeout: 2000 });
         res.json({ status: 'ready' });
-    } catch (error) {
+    }
+    catch (error) {
         // network error or 503 means not ready
         res.json({ status: 'loading' });
     }
 });
-
 // User Settings Routes (Cloud Sync)
 router.get('/user/settings/:key', requireAuth, async (req, res) => {
     const { key } = req.params;
     const userId = req.session.userId;
-
     try {
-        const result = await query(
-            'SELECT value FROM user_settings WHERE user_id = $1 AND key = $2',
-            [userId, key]
-        );
+        const result = await (0, db_1.query)('SELECT value FROM user_settings WHERE user_id = $1 AND key = $2', [userId, key]);
         if (result.rows.length > 0) {
             res.json(JSON.parse(result.rows[0].value));
-        } else {
+        }
+        else {
             res.json(null); // Key not found for user
         }
-    } catch (error) {
+    }
+    catch (error) {
         console.error('Get User Settings error:', error);
         res.status(500).json({ error: 'Failed to fetch settings' });
     }
 });
-
 router.put('/user/settings/:key', requireAuth, async (req, res) => {
     const { key } = req.params;
     const { value } = req.body; // Expecting raw JSON value (object or array)
     const userId = req.session.userId;
-
     try {
-        await query(
-            `INSERT INTO user_settings (user_id, key, value) 
+        await (0, db_1.query)(`INSERT INTO user_settings (user_id, key, value) 
              VALUES ($1, $2, $3) 
              ON CONFLICT (user_id, key) 
-             DO UPDATE SET value = $3`,
-            [userId, key, JSON.stringify(value)]
-        );
+             DO UPDATE SET value = $3`, [userId, key, JSON.stringify(value)]);
         res.json({ message: 'Saved' });
-    } catch (error) {
+    }
+    catch (error) {
         console.error('Save User Settings error:', error);
         res.status(500).json({ error: 'Failed to save settings' });
     }
 });
-
 // System Info Route
 router.get('/system/info', requireAuth, async (req, res) => {
     try {
         // Read version from package.json (use path.join to handle different environments)
         const fs = require('fs');
         const path = require('path');
-
         let version = '1.0.0'; // Fallback
         try {
             // In production (compiled), package.json is at project root
@@ -1080,26 +922,25 @@ router.get('/system/info', requireAuth, async (req, res) => {
             const packagePath = path.join(__dirname, '../../package.json');
             const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
             version = packageJson.version;
-        } catch (err) {
+        }
+        catch (err) {
             console.warn('[SystemInfo] Could not read package.json, using fallback version');
         }
-
         // Check database connection
         let dbStatus = 'disconnected';
         try {
-            await query('SELECT 1');
+            await (0, db_1.query)('SELECT 1');
             dbStatus = 'connected';
-        } catch (dbError) {
+        }
+        catch (dbError) {
             console.error('[SystemInfo] DB Health Check failed:', dbError);
         }
-
         // Calculate uptime in readable format
         const uptimeSeconds = Math.floor(process.uptime());
         const days = Math.floor(uptimeSeconds / (3600 * 24));
         const hours = Math.floor((uptimeSeconds % (3600 * 24)) / 3600);
         const minutes = Math.floor((uptimeSeconds % 3600) / 60);
         const uptimeFormatted = `${days}d ${hours}h ${minutes}m`;
-
         res.json({
             backend: {
                 version: version,
@@ -1111,21 +952,17 @@ router.get('/system/info', requireAuth, async (req, res) => {
                 status: dbStatus
             }
         });
-    } catch (error) {
+    }
+    catch (error) {
         console.error('[SystemInfo] Error:', error);
         res.status(500).json({ error: 'Failed to retrieve system information' });
     }
 });
-
-
-
 // ==================== Proxies ====================
-
 // Proxy for Draw.io (Internal Access to bypass Basic Auth)
 // Router is mounted at /api, so req.url starts with /drawio
 router.all(/\/drawio.*/, requireAuth, async (req, res) => {
     const drawioUrl = 'http://drawio:8080'; // Internal K8s Service URL
-
     // Normalize path: ensure /drawio has trailing slash to avoid redirect
     // Without trailing slash, relative URLs in HTML resolve incorrectly
     let path = req.url;
@@ -1133,11 +970,9 @@ router.all(/\/drawio.*/, requireAuth, async (req, res) => {
         // Insert trailing slash before query string (if any)
         path = path.replace('/drawio', '/drawio/');
     }
-
     const targetUrl = `${drawioUrl}${path}`;
-
     try {
-        const response = await axios({
+        const response = await (0, axios_1.default)({
             method: req.method,
             url: targetUrl,
             headers: {
@@ -1149,21 +984,19 @@ router.all(/\/drawio.*/, requireAuth, async (req, res) => {
             responseType: 'stream',
             validateStatus: () => true // Forward all status codes
         });
-
         // Rewrite Location header if present to keep client inside /api/drawio proxy path
         // The container returns location starting with /drawio (e.g. /drawio/)
         // We need to map this to /api/drawio/
         if (response.headers.location && response.headers.location.startsWith('/drawio')) {
             response.headers.location = response.headers.location.replace('/drawio', '/api/drawio');
         }
-
         res.status(response.status);
         res.set(response.headers);
         response.data.pipe(res);
-    } catch (error) {
+    }
+    catch (error) {
         console.error('Draw.io Proxy Error:', error);
         res.status(502).send('Bad Gateway');
     }
 });
-
-export default router;
+exports.default = router;

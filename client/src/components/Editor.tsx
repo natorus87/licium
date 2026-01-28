@@ -77,19 +77,30 @@ export const Editor: React.FC = () => {
     const handleTranscription = (text: string) => {
         if (!text) return;
 
-        // Append to current cursor position or end of file? 
-        // Simple approach: End of file for now, or use editor instance to insert at cursor.
-        // Inserting at cursor is better.
+        // Clear any pending autosave to prevent race condition
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+            saveTimeoutRef.current = null;
+        }
+
         const editorInstance = editorRef.current?.getInstance();
         if (editorInstance) {
+            // Mark as internal update to prevent handleChange from triggering another save loop immediately
+            isInternalUpdate.current = true;
+
             editorInstance.insertText('\n' + text);
 
-            // Update store sync
+            // Force immediate sync with store and backend
             const newContent = editorInstance.getMarkdown();
+
+            // 1. Update global store state
             updateNoteContent(newContent);
+
+            // 2. Persist to backend immediately
             saveNoteContent(undefined, newContent);
         }
     };
+
 
     // Close export menu on click outside
     useEffect(() => {
@@ -1328,7 +1339,13 @@ export const Editor: React.FC = () => {
                                     <div className="flex items-center gap-3">
                                         <Clock size={16} className="text-gray-500 dark:text-gray-400" />
                                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                            {new Date(version.created_at).toLocaleString()}
+                                            {(() => {
+                                                try {
+                                                    return new Date(version.created_at).toLocaleString();
+                                                } catch (e) {
+                                                    return 'Invalid Date';
+                                                }
+                                            })()}
                                         </span>
                                     </div>
                                     <button
