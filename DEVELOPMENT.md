@@ -477,6 +477,11 @@ location = /apple-touch-icon.png {
 **Cause**: `handleTranscription` triggered an immediate save, but an existing debounced autosave (triggered by `insertText`) would fire *after* the immediate save, often with stale or empty state if the editor hadn't fully synced.
 **Solution**: Explicitly cleared `saveTimeoutRef.current` (debounced timer) inside `handleTranscription` before performing the atomic store/backend update.
 
+#### Variant: AI Append/Replace
+**Problem**: Appending or replacing note content from the AI Chat assistant emptied the note.
+**Cause**: `handleAppendContent` and `handleApplyContent` in `Chat.tsx` only called `updateNoteContent()` (store update), but did not persist the change. The Editor's subsequent autosave would overwrite with stale content.
+**Solution**: Added immediate `saveNoteContent(undefined, newContent)` call after `updateNoteContent()` in both handlers to atomically persist the new content before the Editor's debounced autosave can fire.
+
 ### Mobile Settings Tab Overflow
 
 **Problem**: On mobile devices, the Settings tab bar was cut off, making "Users" and "Account" tabs inaccessible.

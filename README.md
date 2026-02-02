@@ -25,7 +25,7 @@ The name also shares its roots with the English word *"to elicit"*—to draw out
 
 > [!CAUTION]  
 > **Development Status: Beta (Stabilized)**  
-> Licium is currently in active development. Recent updates (v0.9.15) have significantly hardened data safety (atomic transactions) and eliminated known race conditions (Whisper/Autosave). **Always back up your data.**  
+> Licium is currently in active development. Recent updates (v0.9.16) have significantly hardened data safety (atomic transactions) and eliminated known race conditions (Whisper/Autosave/AI Append). **Always back up your data.**  
 > 
 > **Editor Update**  
 > Licium now utilizes the `@licium` scoped editor packages (a maintained fork of Toast UI) to ensure stability and support modern features like Tailwind dark mode integration.

@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.16] - 2026-02-02
+### Fixed
+- **AI Append/Replace Bug**: Fixed a race condition where appending or replacing note content from the AI assistant would empty the note. Added immediate `saveNoteContent()` call after `updateNoteContent()` in both `handleAppendContent` and `handleApplyContent` handlers.
+
 ## [0.9.15] - 2026-01-27
 ### Fixed
 - **Empty Note Bug (Whisper)**: Fixed a race condition where the editor's debounced autosave could overwrite the text from a completed transcription with an empty state. Added explicit `clearTimeout` and atomic store updates in `handleTranscription`.

@@ -8,7 +8,7 @@ import { translations } from '../i18n/translations';
 import { AudioRecorder } from './AudioRecorder';
 
 export const Chat: React.FC = () => {
-    const { chatMessages, sendChatMessage, isLoadingChat, selectedNoteContent, updateNoteContent, openModal, language, customPrompts, addCustomPrompt, updateCustomPrompt, removeCustomPrompt, settings, setActiveProvider } = useStore();
+    const { chatMessages, sendChatMessage, isLoadingChat, selectedNoteContent, updateNoteContent, saveNoteContent, openModal, language, customPrompts, addCustomPrompt, updateCustomPrompt, removeCustomPrompt, settings, setActiveProvider } = useStore();
     const t = translations[language];
 
     const [input, setInput] = useState('');
@@ -83,6 +83,8 @@ export const Chat: React.FC = () => {
             message: 'Sind Sie sicher, dass Sie den aktuellen Notizinhalt durch diesen Text ersetzen möchten?',
             onConfirm: () => {
                 updateNoteContent(content);
+                // Immediately persist to prevent race condition with Editor autosave
+                saveNoteContent(undefined, content);
             }
         });
     };
@@ -90,7 +92,10 @@ export const Chat: React.FC = () => {
     const handleAppendContent = (content: string) => {
         const currentContent = selectedNoteContent || '';
         const separator = currentContent.trim() ? '\n\n' : '';
-        updateNoteContent(currentContent + separator + content);
+        const newContent = currentContent + separator + content;
+        updateNoteContent(newContent);
+        // Immediately persist to prevent race condition with Editor autosave
+        saveNoteContent(undefined, newContent);
     };
 
     const handleAddPrompt = () => {
