@@ -261,37 +261,36 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, level, siblings, onNodeSelect
                 onDrop={handleDrop}
                 className={`${dropIndicatorClass}`}
             >
-                {/* Inner draggable item */}
                 <div
-                    className={`flex items-center ${itemPadding} hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer rounded transition-all duration-150 ${isSelected ? 'bg-blue-100 dark:bg-blue-900' : ''}`}
+                    className={`flex items-center ${itemPadding} hover:bg-gray-100 dark:hover:bg-gray-800/80 cursor-pointer rounded-lg transition-all duration-200 group ${isSelected ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium shadow-sm' : 'text-gray-700 dark:text-gray-300'}`}
                     onClick={handleClick}
                     onContextMenu={handleContextMenu}
                     draggable
                     onDragStart={handleDragStart}
                 >
-                    <span onClick={handleToggle} className="mr-1 p-1">
+                    <span onClick={handleToggle} className="mr-1 p-1 opacity-70 hover:opacity-100 transition-opacity">
                         {node.type === 'folder' && (
                             isOpen ? <ChevronDown size={iconSize} /> : <ChevronRight size={iconSize} />
                         )}
                         {node.type === 'note' && <span className="w-4" />}
                     </span>
 
-                    {node.type === 'folder' ? <Folder size={iconSize} className="text-yellow-500 mr-2" /> : <FileText size={iconSize} className="text-blue-500 mr-2" />}
+                    {node.type === 'folder' ? <Folder size={iconSize} className={`${isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-blue-400 dark:text-blue-500'} mr-2 transition-colors`} /> : <FileText size={iconSize} className={`${isSelected ? 'text-blue-500 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'} mr-2 transition-colors`} />}
 
                     <span className={`flex-1 truncate ${textSize} select-none`}>{node.title}</span>
 
-                    <div className={`flex gap-2 ${isSelected ? 'opacity-100' : 'opacity-0 hover:opacity-100 group-hover:opacity-100'}`}>
+                    <div className={`flex gap-1.5 ${isSelected ? 'opacity-100' : 'opacity-0 hover:opacity-100 group-hover:opacity-100'} transition-opacity duration-200`}>
                         {node.type === 'folder' && (
                             <>
-                                <button onClick={(e) => handleCreate(e, 'note')} title={t.sidebar.newNote}><Plus size={actionIconSize} /></button>
-                                <button onClick={(e) => handleCreate(e, 'folder')} title={t.sidebar.newFolder}><Folder size={actionIconSize} /></button>
+                                <button onClick={(e) => handleCreate(e, 'note')} className="p-1 hover:bg-white dark:hover:bg-gray-700 rounded-md shadow-sm transition-all press-effect text-gray-500 hover:text-blue-600 dark:hover:text-blue-400" title={t.sidebar.newNote}><Plus size={actionIconSize} /></button>
+                                <button onClick={(e) => handleCreate(e, 'folder')} className="p-1 hover:bg-white dark:hover:bg-gray-700 rounded-md shadow-sm transition-all press-effect text-gray-500 hover:text-blue-600 dark:hover:text-blue-400" title={t.sidebar.newFolder}><Folder size={actionIconSize} /></button>
                             </>
                         )}
                         {node.type === 'note' && (
-                            <button onClick={handleDuplicate} title={t.sidebar.duplicate}><Copy size={actionIconSize} /></button>
+                            <button onClick={handleDuplicate} className="p-1 hover:bg-white dark:hover:bg-gray-700 rounded-md shadow-sm transition-all press-effect text-gray-500 hover:text-blue-600 dark:hover:text-blue-400" title={t.sidebar.duplicate}><Copy size={actionIconSize} /></button>
                         )}
-                        <button onClick={handleRename} title={t.sidebar.rename}><Edit2 size={actionIconSize} /></button>
-                        <button onClick={handleDelete} title={t.sidebar.delete}><Trash2 size={actionIconSize} className="text-red-500" /></button>
+                        <button onClick={handleRename} className="p-1 hover:bg-white dark:hover:bg-gray-700 rounded-md shadow-sm transition-all press-effect text-gray-500 hover:text-blue-600 dark:hover:text-blue-400" title={t.sidebar.rename}><Edit2 size={actionIconSize} /></button>
+                        <button onClick={handleDelete} className="p-1 hover:bg-white dark:hover:bg-gray-700 rounded-md shadow-sm transition-all press-effect text-red-400 hover:text-red-500" title={t.sidebar.delete}><Trash2 size={actionIconSize} /></button>
                     </div>
                 </div>
             </div>
@@ -591,37 +590,37 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
             onDragLeave={handleDragLeaveRoot}
             onDrop={handleDropRoot}
         >
-            <div className={`bg-gray-50 dark:bg-gray-800 ${isMobile ? 'p-4 border-b dark:border-gray-700' : ''}`}>
-                <div className={`flex justify-between items-center px-2 border-b dark:border-gray-700 ${isMobile ? 'mb-2' : 'h-[46px]'}`}>
-                    <span className={`font-bold text-gray-600 dark:text-gray-300 ${isMobile ? 'text-base' : 'text-xs'}`}>
+            <div className={`bg-transparent ${isMobile ? 'p-4 border-b border-gray-200/50 dark:border-gray-800/80' : ''}`}>
+                <div className={`flex justify-between items-center px-4 pt-3 pb-2 border-b border-gray-200/50 dark:border-gray-800/80 ${isMobile ? 'mb-2' : 'h-[52px]'}`}>
+                    <span className={`font-display font-semibold text-gray-800 dark:text-gray-200 tracking-wide uppercase ${isMobile ? 'text-sm' : 'text-xs'}`}>
                         {t.sidebar.explorer}
                     </span>
-                    <div className="flex gap-1 text-gray-500 dark:text-gray-400">
-                        <button className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors" onClick={handleQuickNote} title={t.sidebar.quickNote}>
+                    <div className="flex gap-1.5 text-gray-500 dark:text-gray-400">
+                        <button className="p-1.5 hover:bg-white dark:hover:bg-gray-800 rounded-lg shadow-sm transition-all press-effect" onClick={handleQuickNote} title={t.sidebar.quickNote}>
                             <Zap size={isMobile ? 20 : 14} className="text-yellow-500 fill-yellow-500" />
                         </button>
-                        <button className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors" onClick={() => handleCreateRoot('note')} title={t.sidebar.newNote}>
+                        <button className="p-1.5 hover:bg-white dark:hover:bg-gray-800 rounded-lg shadow-sm transition-all press-effect" onClick={() => handleCreateRoot('note')} title={t.sidebar.newNote}>
                             <Plus size={isMobile ? 20 : 14} />
                         </button>
-                        <button className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors" onClick={() => handleCreateRoot('folder')} title={t.sidebar.newFolder}>
+                        <button className="p-1.5 hover:bg-white dark:hover:bg-gray-800 rounded-lg shadow-sm transition-all press-effect" onClick={() => handleCreateRoot('folder')} title={t.sidebar.newFolder}>
                             <Folder size={isMobile ? 20 : 14} />
                         </button>
-                        <button className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors" onClick={() => sortNodes(null)} title="Sortieren (A-Z)">
+                        <button className="p-1.5 hover:bg-white dark:hover:bg-gray-800 rounded-lg shadow-sm transition-all press-effect" onClick={() => sortNodes(null)} title="Sortieren (A-Z)">
                             <ArrowUpDown size={isMobile ? 20 : 14} />
                         </button>
                     </div>
                 </div>
 
-                <div className={`flex items-center ${isMobile ? '' : 'h-[46px] px-2'} border-b dark:border-gray-700`}>
+                <div className={`flex items-center ${isMobile ? '' : 'h-[52px] px-3'} border-b border-gray-200/50 dark:border-gray-800/80`}>
                     <div className="relative flex-1">
                         <input
                             type="text"
-                            placeholder={t.sidebar.searchPlaceholder || "Search..."}
+                            placeholder={t.sidebar.searchPlaceholder || "Search notes..."}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-8 pr-2 py-1.5 text-xs bg-white dark:bg-gray-700 border dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-[#1e2430] border border-gray-200 dark:border-gray-700/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-blue-500/30 transition-shadow placeholder:text-gray-400"
                         />
-                        <Search size={12} className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <Search size={14} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                     </div>
                 </div>
             </div>
@@ -629,29 +628,30 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
             <div className="flex-1 overflow-auto p-2">
                 {/* Tree/Search Results */}
                 {searchTerm.trim() ? (
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-1.5">
                         {searchResults.length === 0 ? (
-                            <div className="text-gray-500 text-xs italic p-2 text-center">Keine Ergebnisse</div>
+                            <div className="text-gray-500 text-sm p-4 text-center bg-white dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700/50 rounded-xl m-2">Keine Ergebnisse</div>
                         ) : (
                             searchResults.map(node => (
                                 <div
                                     key={node.id}
-                                    className="flex items-center p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer rounded"
+                                    className="flex items-center p-2 hover:bg-white dark:hover:bg-gray-800/80 cursor-pointer rounded-lg border border-transparent hover:border-gray-200 dark:hover:border-gray-700/50 hover:shadow-sm transition-all duration-200"
                                     onClick={() => {
                                         selectNote(node);
                                         if (onNodeSelect) onNodeSelect();
                                     }}
                                 >
-                                    {node.type === 'folder' ? <Folder size={16} className="text-yellow-500 mr-2 shrink-0" /> : <FileText size={16} className="text-blue-500 mr-2 shrink-0" />}
+                                    {node.type === 'folder' ? <Folder size={18} className="text-blue-400 dark:text-blue-500 mr-3 shrink-0" /> : <FileText size={18} className="text-gray-400 dark:text-gray-500 mr-3 shrink-0" />}
                                     <div className="flex flex-col overflow-hidden">
-                                        <span className="text-sm truncate font-medium">{node.title}</span>
+                                        <span className="text-sm truncate font-medium text-gray-800 dark:text-gray-200">{node.title}</span>
                                     </div>
                                 </div>
                             ))
                         )}
                     </div>
                 ) : (
-                    tree.map((node, i) => (
+                    <div className="pt-2">
+                    {tree.map((node, i) => (
                         <TreeNode
                             key={node.id}
                             node={node}
@@ -662,29 +662,30 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
                             onContextMenu={handleNodeContextMenu}
                             isMobile={isMobile}
                         />
-                    ))
+                    ))}
+                    </div>
                 )}
             </div>
 
             {/* Trash Section (Bottom) */}
             <div
-                className="border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800"
+                className="border-t border-gray-200/50 dark:border-gray-800/80 bg-white/50 dark:bg-[#151a24]"
                 onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
                 onDrop={handleDropOnTrash}
             >
                 <div
-                    className="flex justify-between items-center px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="flex justify-between items-center px-4 py-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/80 transition-colors group"
                     onClick={toggleTrash}
                 >
-                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300 font-semibold text-sm">
-                        {isTrashOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                    <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 group-hover:text-gray-800 dark:group-hover:text-gray-200 font-medium text-sm transition-colors">
+                        {isTrashOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                         <Trash2 size={16} />
                         <span>{t.trash.title || 'Papierkorb'}</span>
                     </div>
                     {isTrashOpen && (
                         <button
                             onClick={(e) => { e.stopPropagation(); handleEmptyTrash(); }}
-                            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded text-gray-500"
+                            className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md text-gray-400 hover:text-red-500 transition-colors"
                             title={t.trash.emptyTrash || 'Papierkorb leeren'}
                         >
                             <Trash2 size={14} />
@@ -707,38 +708,38 @@ export const TreeView: React.FC<TreeViewProps> = ({ onNodeSelect, isMobile }) =>
 
             {contextMenu.visible && contextMenu.node && (
                 <div
-                    className="fixed z-50 bg-white dark:bg-gray-800 border dark:border-gray-700 shadow-xl rounded-lg py-1 w-48 text-sm"
+                    className="fixed z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 shadow-2xl rounded-xl py-1.5 w-48 text-sm"
                     style={{ top: contextMenu.y, left: contextMenu.x }}
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="px-3 py-2 border-b dark:border-gray-700 font-semibold text-gray-500 dark:text-gray-400 text-xs truncate">
+                    <div className="px-3 py-2 border-b border-gray-100/50 dark:border-gray-800/50 font-semibold text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide truncate mb-1">
                         {contextMenu.node.title}
                     </div>
                     {contextMenu.node.type === 'folder' && (
                         <>
-                            <button onClick={() => handleMenuAction('newInfo')} className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2">
-                                <Plus size={14} className="text-gray-500" />
+                            <button onClick={() => handleMenuAction('newInfo')} className="w-[calc(100%-8px)] mx-1 text-left px-3 py-1.5 hover:bg-gray-100/80 dark:hover:bg-gray-800 rounded-lg flex items-center gap-2 transition-colors">
+                                <Plus size={14} className="text-gray-400" />
                                 <span>{t.sidebar.newNote}</span>
                             </button>
-                            <button onClick={() => handleMenuAction('newFolder')} className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2">
-                                <Folder size={14} className="text-gray-500" />
+                            <button onClick={() => handleMenuAction('newFolder')} className="w-[calc(100%-8px)] mx-1 text-left px-3 py-1.5 hover:bg-gray-100/80 dark:hover:bg-gray-800 rounded-lg flex items-center gap-2 transition-colors">
+                                <Folder size={14} className="text-gray-400" />
                                 <span>{t.sidebar.newFolder}</span>
                             </button>
-                            <div className="border-t dark:border-gray-700 my-1"></div>
+                            <div className="border-t border-gray-100/50 dark:border-gray-800/50 my-1"></div>
                         </>
                     )}
-                    <button onClick={() => handleMenuAction('rename')} className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2">
-                        <Edit2 size={14} className="text-gray-500" />
+                    <button onClick={() => handleMenuAction('rename')} className="w-[calc(100%-8px)] mx-1 text-left px-3 py-1.5 hover:bg-gray-100/80 dark:hover:bg-gray-800 rounded-lg flex items-center gap-2 transition-colors">
+                        <Edit2 size={14} className="text-gray-400" />
                         <span>{t.sidebar.rename}</span>
                     </button>
                     {contextMenu.node.type === 'note' && (
-                        <button onClick={() => handleMenuAction('duplicate')} className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2">
-                            <Copy size={14} className="text-gray-500" />
+                        <button onClick={() => handleMenuAction('duplicate')} className="w-[calc(100%-8px)] mx-1 text-left px-3 py-1.5 hover:bg-gray-100/80 dark:hover:bg-gray-800 rounded-lg flex items-center gap-2 transition-colors">
+                            <Copy size={14} className="text-gray-400" />
                             <span>{t.sidebar.duplicate}</span>
                         </button>
                     )}
-                    <div className="border-t dark:border-gray-700 my-1"></div>
-                    <button onClick={() => handleMenuAction('delete')} className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-red-600 dark:text-red-400">
+                    <div className="border-t border-gray-100/50 dark:border-gray-800/50 my-1"></div>
+                    <button onClick={() => handleMenuAction('delete')} className="w-[calc(100%-8px)] mx-1 text-left px-3 py-1.5 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg flex items-center gap-2 text-red-600 dark:text-red-400 transition-colors">
                         <Trash2 size={14} />
                         <span>{t.sidebar.delete}</span>
                     </button>

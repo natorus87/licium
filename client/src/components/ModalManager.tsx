@@ -61,25 +61,25 @@ export const ModalManager: React.FC = () => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
-            <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full ${modal.fields ? 'max-w-xl' : 'max-w-md'} overflow-hidden animate-in fade-in zoom-in duration-200`}>
-                <div className="p-4 border-b dark:border-gray-700 flex justify-between items-center">
-                    <h3 className="font-bold text-lg text-gray-800 dark:text-gray-100">{modal.title}</h3>
-                    <button onClick={handleCancel} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+        <div className="fixed inset-0 bg-gray-900/60 dark:bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+            <div className={`bg-white dark:bg-[#151a24] rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 w-full ${modal.fields ? 'max-w-xl' : 'max-w-md'} overflow-hidden animate-in fade-in zoom-in duration-200`}>
+                <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-[#1e2430]/50 backdrop-blur-sm">
+                    <h3 className="font-display font-bold text-lg text-gray-900 dark:text-gray-100 tracking-tight">{modal.title}</h3>
+                    <button onClick={handleCancel} className="p-2 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-gray-800 rounded-xl transition-all press-effect">
                         <X size={20} />
                     </button>
                 </div>
 
-                <div className="p-4">
+                <div className="p-6">
                     {modal.message && (
-                        <p className="text-gray-600 dark:text-gray-300 mb-4">{modal.message}</p>
+                        <p className="text-gray-600 dark:text-gray-300 mb-6 font-medium leading-relaxed">{modal.message}</p>
                     )}
 
                     {modal.type === 'prompt' && !modal.fields && (
                         <input
                             ref={inputRef}
                             type="text"
-                            className="w-full border dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 bg-white dark:bg-[#1e2430] text-gray-900 dark:text-gray-100 placeholder-gray-400 shadow-sm transition-all outline-none"
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
                             onKeyDown={handleKeyDown}
@@ -87,16 +87,16 @@ export const ModalManager: React.FC = () => {
                     )}
 
                     {modal.type === 'prompt' && modal.fields && (
-                        <div className="space-y-4">
+                        <div className="space-y-5">
                             {modal.fields.map((field, idx) => (
                                 <div key={field.name}>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5 ml-1">
                                         {field.label}
                                     </label>
                                     {field.type === 'textarea' ? (
                                         <textarea
                                             ref={idx === 0 ? (inputRef as any) : null}
-                                            className="w-full border dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                                            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 bg-white dark:bg-[#1e2430] text-gray-900 dark:text-gray-100 placeholder-gray-400 shadow-sm transition-all outline-none min-h-[120px] resize-y"
                                             placeholder={field.placeholder}
                                             value={fieldValues[field.name] || ''}
                                             onChange={(e) => setFieldValues(prev => ({ ...prev, [field.name]: e.target.value }))}
@@ -106,7 +106,7 @@ export const ModalManager: React.FC = () => {
                                         <input
                                             ref={idx === 0 ? inputRef : null}
                                             type="text"
-                                            className="w-full border dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700/50 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 bg-white dark:bg-[#1e2430] text-gray-900 dark:text-gray-100 placeholder-gray-400 shadow-sm transition-all outline-none"
                                             placeholder={field.placeholder}
                                             value={fieldValues[field.name] || ''}
                                             onChange={(e) => setFieldValues(prev => ({ ...prev, [field.name]: e.target.value }))}
@@ -119,18 +119,18 @@ export const ModalManager: React.FC = () => {
                     )}
                 </div>
 
-                <div className="p-4 border-t dark:border-gray-700 flex justify-end gap-2 bg-gray-50 dark:bg-gray-800/50">
+                <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3 bg-gray-50/50 dark:bg-[#1e2430]/50 items-center backdrop-blur-sm">
                     {modal.type !== 'alert' && (
                         <button
                             onClick={handleCancel}
-                            className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                            className="px-5 py-2.5 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-[#151a24] hover:bg-gray-50 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl transition-all shadow-sm"
                         >
                             {t.general.cancel}
                         </button>
                     )}
                     <button
                         onClick={handleConfirm}
-                        className="px-4 py-2 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded"
+                        className="px-6 py-2.5 text-sm font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 transition-all press-effect min-w-[100px]"
                     >
                         {modal.type === 'alert' ? 'OK' : t.general.confirm}
                     </button>

@@ -7,6 +7,10 @@ export default {
     ],
     theme: {
         extend: {
+            fontFamily: {
+                sans: ['Inter', 'sans-serif'],
+                display: ['Outfit', 'sans-serif'],
+            },
             colors: {
                 blue: {
                     50: '#f4f8fb',

@@ -748,18 +748,18 @@ export const Editor: React.FC = () => {
 
     return (
         <div className="h-full flex flex-col relative">
-            <div className="h-[46px] px-2 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs text-gray-500 dark:text-gray-400 flex justify-between items-center">
-                <div className="flex items-center gap-2">
+            <div className="h-[52px] px-4 border-b border-gray-200/50 dark:border-gray-800/80 bg-white/50 dark:bg-[#151a24] backdrop-blur-md text-xs text-gray-500 dark:text-gray-400 flex justify-between items-center z-10 shadow-sm">
+                <div className="flex items-center gap-2 font-medium">
                     {saveError ? (
-                        <span className="text-red-500 flex items-center gap-1">
+                        <span className="text-red-500 flex items-center gap-1.5">
                             <i className="fa fa-exclamation-circle"></i> {saveError}
                         </span>
                     ) : isSaving ? (
-                        <span className="text-blue-500 flex items-center gap-1">
+                        <span className="text-blue-500 flex items-center gap-1.5">
                             <i className="fa fa-spinner fa-spin"></i> {t.editor.saving}
                         </span>
                     ) : lastSaved ? (
-                        <span className="text-green-600 flex items-center gap-1">
+                        <span className="text-emerald-600 dark:text-emerald-500 flex items-center gap-1.5">
                             <i className="fa fa-check"></i> {t.editor.saved}: {lastSaved.toLocaleTimeString()}
                         </span>
                     ) : (
@@ -767,10 +767,10 @@ export const Editor: React.FC = () => {
                     )}
                 </div>
 
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-1.5 items-center">
                     <button
                         onClick={() => setShowRecorder(true)}
-                        className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded"
+                        className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-gray-800 rounded-lg shadow-sm transition-all press-effect"
                         title={t.audio?.title || 'Audio'}
                     >
                         <Mic size={16} />
@@ -778,7 +778,7 @@ export const Editor: React.FC = () => {
                     {/* Mobile Menu Button - Visible < md */}
                     <button
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        className="p-1.5 md:hidden text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded"
+                        className="p-2 md:hidden text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-gray-800 rounded-lg shadow-sm transition-all press-effect"
                     >
                         <MoreVertical size={16} />
                     </button>
@@ -836,16 +836,16 @@ export const Editor: React.FC = () => {
                     )}
 
                     {/* Desktop Toolbar - Hidden < md */}
-                    <div className="hidden md:flex items-center gap-2">
-                        <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-600 mx-1"></div>
+                    <div className="hidden md:flex items-center gap-1.5">
+                        <div className="h-4 w-[1px] bg-gray-200 dark:bg-gray-700/50 mx-1"></div>
                         <button
                             onClick={openDrawio}
-                            className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded"
+                            className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-gray-800 rounded-lg shadow-sm transition-all press-effect"
                             title={t.editor.insertDiagram}
                         >
                             <Workflow size={16} />
                         </button>
-                        <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-600 mx-1"></div>
+                        <div className="h-4 w-[1px] bg-gray-200 dark:bg-gray-700/50 mx-1"></div>
 
                         <input
                             type="file"
@@ -874,12 +874,12 @@ export const Editor: React.FC = () => {
                         />
                         <button
                             onClick={() => document.getElementById('import-file')?.click()}
-                            className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded"
+                            className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-gray-800 rounded-lg shadow-sm transition-all press-effect"
                             title="Import Text/Markdown"
                         >
                             <UploadCloud size={16} />
                         </button>
-                        <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-600 mx-1"></div>
+                        <div className="h-4 w-[1px] bg-gray-200 dark:bg-gray-700/50 mx-1"></div>
 
                         {/* Export Menu */}
                         <div className="relative">
@@ -889,27 +889,28 @@ export const Editor: React.FC = () => {
                                     setContextMenu(prev => ({ ...prev, visible: false }));
                                     setIsExportMenuOpen(!isExportMenuOpen);
                                 }}
-                                className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded"
+                                className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-gray-800 rounded-lg shadow-sm transition-all press-effect"
                                 title="Export"
                             >
                                 <Download size={16} />
                             </button>
                             {isExportMenuOpen && (
-                                <div className="absolute top-full right-0 mt-1 w-40 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded shadow-lg z-50 flex flex-col py-1">
+                                <div className="absolute top-full right-0 mt-2 w-40 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 rounded-xl shadow-2xl z-50 flex flex-col py-1.5 overflow-hidden">
                                     <button
-                                        className="px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
+                                        className="px-4 py-2 text-left hover:bg-gray-100/80 dark:hover:bg-gray-800 text-sm transition-colors text-gray-700 dark:text-gray-300"
                                         onClick={() => handleExport('md')}
                                     >
                                         Markdown (.md)
                                     </button>
                                     <button
-                                        className="px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
+                                        className="px-4 py-2 text-left hover:bg-gray-100/80 dark:hover:bg-gray-800 text-sm transition-colors text-gray-700 dark:text-gray-300"
                                         onClick={() => handleExport('txt')}
                                     >
                                         Text (.txt)
                                     </button>
+                                    <div className="border-t border-gray-100/50 dark:border-gray-700/50 my-1"></div>
                                     <button
-                                        className="px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-sm border-t dark:border-gray-700 text-blue-600 dark:text-blue-400"
+                                        className="px-4 py-2 text-left hover:bg-blue-50/50 dark:hover:bg-blue-900/20 text-sm transition-colors text-blue-600 dark:text-blue-400 font-medium"
                                         onClick={() => handleExport('pdf')}
                                     >
                                         PDF (Print)
@@ -918,26 +919,26 @@ export const Editor: React.FC = () => {
                             )}
                         </div>
 
-                        <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-600 mx-1"></div>
+                        <div className="h-4 w-[1px] bg-gray-200 dark:bg-gray-700/50 mx-1"></div>
                         <button
                             onClick={openHistoryModal}
-                            className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded"
+                            className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-gray-800 rounded-lg shadow-sm transition-all press-effect"
                             title={t.editor.history}
                         >
                             <Clock size={16} />
                         </button>
-                        <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-600 mx-1"></div>
+                        <div className="h-4 w-[1px] bg-gray-200 dark:bg-gray-700/50 mx-1"></div>
                         <button
                             onClick={() => saveNoteContent()}
                             disabled={isSaving}
-                            className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded"
+                            className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-gray-800 rounded-lg shadow-sm transition-all press-effect"
                             title={isSaving ? t.editor.saving : t.editor.saveNow}
                         >
-                            {isSaving ? <i className="fa fa-spinner fa-spin"></i> : <Save size={16} />}
+                            {isSaving ? <i className="fa fa-spinner fa-spin text-blue-500"></i> : <Save size={16} />}
                         </button>
                     </div>
                 </div>
-            </div >
+            </div>
 
 
             {/* Version History Modal */}

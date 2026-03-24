@@ -114,36 +114,36 @@ export const Settings: React.FC = () => {
     const isAdmin = user?.role === 'admin';
 
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-5xl h-[80vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
-                <div className="p-4 border-b dark:border-gray-700 flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t.settings.title}</h2>
-                    <button onClick={toggleSettings} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-                        <X size={24} />
+        <div className="fixed inset-0 bg-gray-900/60 dark:bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6 pb-20 sm:pb-6">
+            <div className="bg-white dark:bg-[#151a24] rounded-2xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200 border border-gray-200 dark:border-gray-800">
+                <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-[#1e2430]/50 backdrop-blur-sm">
+                    <h2 className="text-xl font-display font-bold text-gray-800 dark:text-gray-100 tracking-tight">{t.settings.title}</h2>
+                    <button onClick={toggleSettings} className="p-2 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-gray-800 rounded-xl transition-all press-effect">
+                        <X size={20} />
                     </button>
                 </div>
 
-                <div className="flex border-b dark:border-gray-700 overflow-x-auto no-scrollbar">
+                <div className="flex px-6 py-3 border-b border-gray-100 dark:border-gray-800 overflow-x-auto no-scrollbar gap-2 bg-white dark:bg-[#151a24] shrink-0">
                     <button
-                        className={`px-4 py-2 text-sm font-medium whitespace-nowrap shrink-0 ${activeTab === 'general' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+                        className={`px-4 py-2 text-sm font-medium rounded-xl whitespace-nowrap shrink-0 transition-all ${activeTab === 'general' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#1e2430]'}`}
                         onClick={() => setActiveTab('general')}
                     >
                         {t.settings.tabs.general}
                     </button>
                     <button
-                        className={`px-4 py-2 text-sm font-medium whitespace-nowrap shrink-0 ${activeTab === 'llm' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+                        className={`px-4 py-2 text-sm font-medium rounded-xl whitespace-nowrap shrink-0 transition-all ${activeTab === 'llm' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#1e2430]'}`}
                         onClick={() => setActiveTab('llm')}
                     >
                         {t.settings.tabs.llm}
                     </button>
                     <button
-                        className={`px-4 py-2 text-sm font-medium whitespace-nowrap shrink-0 ${activeTab === 'embeddings' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+                        className={`px-4 py-2 text-sm font-medium rounded-xl whitespace-nowrap shrink-0 transition-all ${activeTab === 'embeddings' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#1e2430]'}`}
                         onClick={() => setActiveTab('embeddings')}
                     >
                         {t.settings.tabs.embeddings}
                     </button>
                     <button
-                        className={`px-4 py-2 text-sm font-medium whitespace-nowrap shrink-0 ${activeTab === 'tools' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+                        className={`px-4 py-2 text-sm font-medium rounded-xl whitespace-nowrap shrink-0 transition-all ${activeTab === 'tools' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#1e2430]'}`}
                         onClick={() => setActiveTab('tools')}
                     >
                         {t.settings.tabs.tools}
@@ -151,7 +151,7 @@ export const Settings: React.FC = () => {
 
                     {isAdmin && (
                         <button
-                            className={`px-4 py-2 text-sm font-medium whitespace-nowrap shrink-0 ${activeTab === 'users' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+                            className={`px-4 py-2 text-sm font-medium rounded-xl whitespace-nowrap shrink-0 transition-all ${activeTab === 'users' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#1e2430]'}`}
                             onClick={() => setActiveTab('users')}
                         >
                             {t.settings.tabs.users}
@@ -159,7 +159,7 @@ export const Settings: React.FC = () => {
                     )}
 
                     <button
-                        className={`px-4 py-2 text-sm font-medium whitespace-nowrap shrink-0 ${activeTab === 'info' ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+                        className={`px-4 py-2 text-sm font-medium rounded-xl whitespace-nowrap shrink-0 transition-all ${activeTab === 'info' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#1e2430]'}`}
                         onClick={() => setActiveTab('info')}
                     >
                         {t.settings.info.title}
@@ -1015,22 +1015,23 @@ export const Settings: React.FC = () => {
                     )}
                 </div>
 
-                <div className="p-4 border-t dark:border-gray-700 flex justify-end gap-2 bg-gray-50 dark:bg-gray-800 items-center">
+                <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3 bg-gray-50/50 dark:bg-[#1e2430]/50 items-center backdrop-blur-sm">
                     {saveStatus && (
-                        <span className={`text-sm mr-4 ${saveStatus.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        <span className={`text-sm font-medium mr-auto flex items-center gap-1.5 ${saveStatus.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {saveStatus.type === 'success' ? '✓' : '⚠️'}
                             {saveStatus.message}
                         </span>
                     )}
                     <button
                         onClick={toggleSettings}
-                        className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                        className="px-5 py-2.5 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-[#151a24] hover:bg-gray-50 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl transition-all shadow-sm"
                     >
                         {t.general.close}
                     </button>
                     {(activeTab === 'llm' || activeTab === 'embeddings' || activeTab === 'tools') && isAdmin && (
                         <button
                             onClick={handleSave}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded"
+                            className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 transition-all press-effect"
                         >
                             <Save size={18} /> {t.settings.labels.saveGlobal}
                         </button>

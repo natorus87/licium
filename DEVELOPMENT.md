@@ -22,12 +22,14 @@ This document serves as a "memory" for the AI agent (and developers) regarding t
 ### 1.1 Branding & Identity
 - **Name**: Licium
 - **Assets**:
-    - **Logo**: `/logo_new.jpg` (Used in Login and Branding).
+    - **Logo**: `/logo_new.jpg` (Used in Login and Branding). *Updated: Increased size, removed bounding box container to emphasize the glowing cyber-cat aesthetic.*
     - **Favicon**: `/icon_32x32.png` (Browser Tab).
     - **App Icon**: `/icon_32x32@2x.png` (Header Icon).
-    - **Theme**: **Steel Blue** (`#4580a5`) primary color with secondary Cyan/Teal accents.
-        - *Note*: Tailwind configuration overrides the default `blue` palette with this brand color.
-    - **Dark Mode**: Fully supported (Slate/Gray palette).
+    - **Theme**: **Electric Blue & Indigo** primary color scale.
+        - *Note*: Tailwind default blue palette is used to maintain brand consistency with the classic Licium visual language.
+    - **Aesthetic**: **Glassmorphism** & Modern SaaS look. Extensive use of translucent backgrounds (`bg-opacity`, `backdrop-blur`), soft gradients (`blue` to `indigo`), and rounded corners (`rounded-xl`, `rounded-2xl`).
+    - **Typography**: "Outfit" (Headers) and "Inter" (Body).
+    - **Dark Mode**: Fully supported (Slate/Gray base palette with Blue accents).
 
 ### 1.2 Mobile Architecture
 - **Responsive Strategy**:
@@ -45,7 +47,8 @@ This document serves as a "memory" for the AI agent (and developers) regarding t
     - **Explorer**: Header (46px) + Search Row (46px)
     - **Editor**: Status Bar with save controls (46px) + Toast UI Toolbar (46px, CSS override)
     - **AI Assistant**: Header with model selector (46px) + Privacy Notice (46px)
-- **Consistent Coloring**: All primary actions (Save, Insert Diagram, Mic, etc.) use the **Corporate Blue** (`text-blue-600`) to match the Note symbols in the Explorer, creating a visual link between "Note Management" and "Editing Tools".
+- **Chat Footer**: The Chat input area uses a strict centered layout with the Send button and Microphone button beautifully integrated inline within the text area. The scrollbar is hidden for a cleaner, modern messaging aesthetic.
+- **Consistent Coloring**: All primary actions (Save, Insert Diagram, Mic, etc.) use the **Brand Blue** (`text-blue-600`) to match the Note symbols in the Explorer, creating a visual link between "Note Management" and "Editing Tools".
 - **CSS Variable**: `--toolbar-height: 46px` defined in `:root` for consistency.
 - **Toast UI Override**: Custom CSS in `index.css` forces Toast UI toolbar to 46px height.
 
@@ -154,10 +157,12 @@ The application is designed to be domain-agnostic but defaults to `licium.local`
     - **Default Selection**: Users can explicitly set a "Standard" (Default) provider in Settings. This selection (`localActiveProviderId`) is persisted in `global_settings` and overrides the default "first-in-list" behavior.
 - **Privacy Mode**: Explicit visibility into data flow (Local vs. External) with UI warnings.
 - **UI Enhancements**:
+    - **Glassmorphism Overhaul**: Entire UI migrated from flat layouts to dynamic glass panels (`backdrop-blur`, `bg-white/70`, `shadow-sm`) with premium modern SaaS spacing (bento-box styling).
     - **Smart Labels**: Chat history displays concise labels (e.g., "Summarize") instead of full prompt text. Full text available via tooltip.
     - **Payload Sanitization**: Client automatically strips UI-only fields (like `label`) before sending requests to backend to prevent `422` validation errors from strict LLM providers.
     - **Settings Refactor**:
         - **Global Tools Tab**: Consolidated "Draw.io" and "Web Search" into a unified "Tools" (Werkzeuge) tab.
+        - **Premium Modals**: Settings now uses `rounded-2xl` structural cards with pill-shaped footer buttons.
         - **Global Search Config**: Moved SearXNG URL to global scope, removing redundant per-provider fields.
         - **Mobile Optimized**: Settings tabs are scrollable on mobile devices (`overflow-x-auto`) to ensure accessibility of all sections.
 

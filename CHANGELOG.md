@@ -2,7 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0] - 2026-03-24
+### Changed
+- **UI & UX Refinements**: 
+  - Centered chat toggles (Search, Memory) vertically relative to the chat input field.
+  - Integrated the Send button seamlessly into the auto-expanding chat input area next to the Microphone icon, matching standard messaging workflows.
+  - Removed textarea scrollbar for an immaculate, flicker-free typing experience.
+  - Fixed textarea padding to prevent overlapping text with inline buttons.
+- **Color Identity**: Solidified the brand color palette back to **Licium Steel Blue (`#4580a5`)**, abandoning the Teal experiment while preserving the structural "Glassmorphism" bento-box design improvements.
+- **Docker Architecture**: Optimized multi-arch Docker image compilation targeting `linux/amd64` and `linux/arm64`.
+
 ## [0.9.16] - 2026-02-02
+### Changed
+- **UI Redesign**: Complete overhaul of the application aesthetic to a modern SaaS Glassmorphism design. Retains the classic **Electric Blue / Indigo** color palette to perfectly match the sleek dashboard visual language.
+- **Layout & Spacing**: Upgraded modals, settings views, and the chat interface to use rounded bento-box structures (`rounded-2xl`) and exact symmetrical styling for a premium feel.
+
 ### Fixed
 - **AI Append/Replace Bug**: Fixed a race condition where appending or replacing note content from the AI assistant would empty the note. Added immediate `saveNoteContent()` call after `updateNoteContent()` in both `handleAppendContent` and `handleApplyContent` handlers.
 

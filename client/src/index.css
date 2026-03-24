@@ -3,6 +3,21 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .glass {
+    @apply bg-white/70 dark:bg-gray-900/70 backdrop-blur-md border border-white/20 dark:border-gray-700/50 shadow-sm transition-colors;
+  }
+  .glass-panel {
+    @apply bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-white/40 dark:border-gray-700/40 shadow-sm transition-colors;
+  }
+  .bento-card {
+    @apply bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700/60 shadow-sm hover:shadow-md transition-all duration-300;
+  }
+  .press-effect {
+    @apply active:scale-[0.98] transition-transform duration-100 ease-out;
+  }
+}
+
 /* iOS PWA Safe Area Handling */
 /* iOS PWA Safe Area Handling */
 html,
@@ -13,6 +28,7 @@ body,
   margin: 0;
   padding: 0;
   overflow: hidden;
+  font-family: 'Inter', sans-serif;
   /* Prevent body scroll */
   overscroll-behavior: none;
   /* Prevent rubber banding */

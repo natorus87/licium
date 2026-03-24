@@ -42,6 +42,7 @@ Licium is more than a note-taking application. It's a **second brain** that acti
 - **Capture fast, structure later** – Dump your thoughts freely; let AI help organize them.
 - **Privacy first** – Run everything locally. Your data never leaves your infrastructure.
 - **Intelligence built-in** – Chat with your notes, search semantically, transcribe voice memos.
+- **Beautiful by design** – A premium, glassmorphism-based Blue & Indigo user interface that makes working enjoyable.
 
 **Key Features at a Glance:**
 

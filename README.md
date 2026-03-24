@@ -25,7 +25,7 @@ The name also shares its roots with the English word *"to elicit"*—to draw out
 
 > [!CAUTION]  
 > **Development Status: Beta (Stabilized)**  
-> Licium is currently in active development. Recent updates (v0.9.16) have significantly hardened data safety (atomic transactions) and eliminated known race conditions (Whisper/Autosave/AI Append). **Always back up your data.**  
+> Licium is currently in active development. Recent updates (v1.0.0) have significantly hardened data safety (atomic transactions), eliminated known race conditions (Whisper/Autosave/AI Append), and refined the Chat interface. **Always back up your data.**  
 > 
 > **Editor Update**  
 > Licium now utilizes the `@licium` scoped editor packages (a maintained fork of Toast UI) to ensure stability and support modern features like Tailwind dark mode integration.
@@ -36,7 +36,7 @@ The name also shares its roots with the English word *"to elicit"*—to draw out
 
 ### 🎨 Visual Showcase & Theming
 
-Licium features a clean, professional interface with automatic **Dark Mode** support. The application respects your system preferences by default (`prefers-color-scheme`) but also allows for manual toggling via the settings.
+Licium features a clean, premium **modern SaaS interface** built on a **Glassmorphism** aesthetic. The design relies on soft gradients, translucent panels, and a custom **Electric Blue / Indigo** branding. It fully respects your system preferences (`prefers-color-scheme`) but also allows for manual toggling between beautifully crafted Light and Dark modes.
 
 <div align="center">
   <img src="assets/overview_dark.png" width="48%" alt="Licium Dark Mode" />

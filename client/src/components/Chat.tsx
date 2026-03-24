@@ -187,14 +187,14 @@ export const Chat: React.FC = () => {
             )}
 
             {/* Header Row */}
-            <div className="h-[46px] px-2 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800 font-bold text-gray-700 dark:text-gray-300 text-xs flex justify-between items-center group">
+            <div className="h-[52px] px-4 border-b border-gray-200/50 dark:border-gray-800/80 bg-white/50 dark:bg-[#151a24] backdrop-blur-md font-display font-semibold tracking-wide uppercase text-gray-800 dark:text-gray-200 text-xs flex justify-between items-center group z-10 shadow-sm">
                 <div className="flex items-center gap-2 overflow-hidden flex-1 mr-2">
                     <span className="shrink-0">{t.chat.title}</span>
-                    <div className="flex-1 max-w-[140px]">
+                    <div className="flex-1 max-w-[140px] ml-2">
                         <select
                             value={settings.activeProviderId}
                             onChange={(e) => setActiveProvider(e.target.value)}
-                            className="w-full bg-transparent border-none text-xs font-normal focus:ring-0 truncate cursor-pointer hover:bg-black/5 dark:hover:bg-white/10 rounded px-1 py-0"
+                            className="w-full bg-gray-100/80 dark:bg-gray-800/80 border border-gray-200/50 dark:border-gray-700/50 text-gray-600 dark:text-gray-300 text-xs font-medium focus:ring-1 focus:ring-blue-500/50 truncate cursor-pointer rounded-lg px-2 py-1 shadow-sm transition-colors"
                             title={t.settings.labels.selectModel}
                         >
                             {settings.providers.filter(p => !p.category || p.category === 'chat').map(p => (
@@ -206,26 +206,26 @@ export const Chat: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-1.5">
                     <button
                         onClick={() => setIncludeNoteContent(!includeNoteContent)}
-                        className={`p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${includeNoteContent ? 'text-blue-500' : 'text-gray-400 opacity-50'}`}
+                        className={`p-1.5 rounded-lg shadow-sm transition-all press-effect ${includeNoteContent ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-800/50' : 'bg-white dark:bg-gray-800 text-gray-400 border border-gray-200/50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
                         title={includeNoteContent ? "Kontext aktiv" : "Kontext inaktiv"}
                     >
-                        <FileText size={18} />
+                        <FileText size={16} />
                     </button>
                     <button
                         onClick={handleClearChat}
-                        className="p-1 text-gray-500 hover:text-red-500 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 bg-white dark:bg-gray-800 border border-gray-200/50 dark:border-gray-700/50 rounded-lg shadow-sm transition-all press-effect"
                         title={t.chat.clearHistory}
                     >
-                        <Trash2 size={18} />
+                        <Trash2 size={16} />
                     </button>
                 </div>
             </div>
 
             {/* Privacy Box */}
-            <div className={`h-[46px] px-2 border-b dark:border-gray-700 flex items-center gap-2 text-xs transition-colors ${showPrivacyWarning ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300' : 'bg-green-50 dark:bg-green-900/10 text-green-700 dark:text-green-400'}`}>
+            <div className={`px-4 py-2.5 border-b border-gray-200/50 dark:border-gray-800/80 flex items-center gap-2.5 text-xs transition-colors shadow-sm z-0 ${showPrivacyWarning ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400' : 'bg-emerald-50 dark:bg-emerald-900/10 text-emerald-700 dark:text-emerald-400'}`}>
                 {showPrivacyWarning ? <ShieldAlert size={14} className="shrink-0" /> : <Shield size={14} className="shrink-0" />}
                 <div className="flex-1 overflow-hidden">
                     <span className="font-medium truncate block">
@@ -237,19 +237,21 @@ export const Chat: React.FC = () => {
             </div>
 
             {/* Chat Messages */}
-            <div className="flex-1 overflow-auto p-4 space-y-4">
+            <div className="flex-1 overflow-auto p-4 space-y-6 scrollbar-thin dark:bg-[#151a24] bg-gray-50/30">
                 {chatMessages.length === 0 && (
-                    <div className="text-center text-gray-400 dark:text-gray-500 mt-10 text-sm">
-                        <Sparkles className="mx-auto mb-2" />
+                    <div className="text-center text-gray-400 dark:text-gray-500 mt-10 text-sm flex flex-col items-center">
+                        <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 mb-3">
+                            <Sparkles className="mx-auto text-blue-500 dark:text-blue-400 w-8 h-8" />
+                        </div>
                         {t.chat.emptyState}
                     </div>
                 )}
                 {chatMessages.map((msg, idx) => (
-                    <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                    <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} group/msg`}>
                         <div
-                            className={`max-w-[90%] rounded-lg p-3 text-sm ${msg.role === 'user'
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200'
+                            className={`max-w-[85%] rounded-2xl p-4 text-sm shadow-sm transition-all ${msg.role === 'user'
+                                ? 'bg-gradient-to-br from-blue-600 to-indigo-500 text-white rounded-br-none shadow-blue-500/20'
+                                : 'bg-white dark:bg-[#1e2430] text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-gray-700/50 rounded-bl-none'
                                 }`}
                             title={msg.role === 'user' && msg.label ? msg.content : undefined}
                         >
@@ -262,17 +264,17 @@ export const Chat: React.FC = () => {
                             )}
                         </div>
                         {msg.role === 'assistant' && (
-                            <div className="flex gap-3 mt-1 ml-1">
+                            <div className="flex gap-2 mt-2 ml-2 opacity-50 group-hover/msg:opacity-100 transition-opacity">
                                 <button
                                     onClick={() => handleApplyContent(msg.content)}
-                                    className="text-xs text-blue-500 hover:underline"
+                                    className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-md transition-colors"
                                     title={t.chat.buttons.replace}
                                 >
                                     {t.chat.buttons.replace}
                                 </button>
                                 <button
                                     onClick={() => handleAppendContent(msg.content)}
-                                    className="text-xs text-green-600 hover:underline"
+                                    className="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-md transition-colors"
                                     title={t.chat.buttons.append}
                                 >
                                     {t.chat.buttons.append}
@@ -292,17 +294,17 @@ export const Chat: React.FC = () => {
             </div>
 
             {/* Quick Actions */}
-            <div className="p-2 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+            <div className="p-3 border-t border-gray-200/50 dark:border-gray-800/80 bg-white/50 dark:bg-[#151a24] backdrop-blur-md">
                 <div className="grid grid-cols-2 gap-2 mb-2">
                     {currentActions.map((action: any) => (
-                        <div key={action.id} className="relative group">
+                        <div key={action.id} className="relative group/action">
                             <button
                                 onClick={() => handleAction('chat', action.prompt, action.label)}
-                                className="w-full flex items-center justify-center gap-1 text-xs bg-white dark:bg-gray-700 border dark:border-gray-600 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 h-8"
+                                className="w-full flex items-center justify-center gap-1.5 text-xs bg-white dark:bg-[#1e2430] border border-gray-200 dark:border-gray-700/50 p-2 rounded-xl hover:border-blue-500/50 hover:shadow-sm transition-all duration-200 disabled:opacity-50 text-gray-700 dark:text-gray-300 h-9 font-medium press-effect"
                                 disabled={!selectedNoteContent}
                                 title={action.prompt}
                             >
-                                <action.icon size={12} /> <span className="truncate max-w-[100px]">{action.label}</span>
+                                <action.icon size={14} className="text-gray-400 group-hover/action:text-blue-500 transition-colors" /> <span className="truncate max-w-[100px]">{action.label}</span>
                             </button>
                             {action.isCustom && (
                                 <button
@@ -336,10 +338,10 @@ export const Chat: React.FC = () => {
                     {showAddButton && (
                         <button
                             onClick={handleAddPrompt}
-                            className="flex items-center justify-center gap-1 text-xs border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 h-8"
+                            className="flex items-center justify-center gap-1.5 text-xs border-2 border-dashed border-gray-300 dark:border-gray-700 text-gray-400 dark:text-gray-500 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors h-9 font-medium press-effect"
                             title={t.chat.customPrompts.modalTitle}
                         >
-                            <Plus size={12} /> {t.chat.customPrompts.add}
+                            <Plus size={14} /> {t.chat.customPrompts.add}
                         </button>
                     )}
                 </div>
@@ -369,45 +371,53 @@ export const Chat: React.FC = () => {
             </div>
 
             {/* Footer */}
-            <div className="p-2 pb-2 border-t flex gap-2 items-center bg-white dark:bg-gray-900">
-                <button
-                    onClick={() => setUseSearch(!useSearch)}
-                    className={`p-2 rounded ${useSearch ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
-                    title={useSearch ? "Websuche aktiv" : "Websuche aktivieren"}
-                >
-                    <Globe size={18} />
-                </button>
-                <button
-                    onClick={() => setUseContext(!useContext)}
-                    className={`p-2 rounded ${useContext ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
-                    title={useContext ? "Kontext aus Notizen aktiv" : "Kontext aus Notizen aktivieren"}
-                >
-                    <Database size={18} />
-                </button>
-                <textarea
-                    ref={textareaRef}
-                    className="flex-1 border dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none overflow-y-auto min-h-[38px] max-h-[150px]"
-                    placeholder={t.chat.placeholder}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    disabled={isLoadingChat}
-                    rows={1}
-                />
-                <button
-                    onClick={() => setShowRecorder(true)}
-                    className="bg-gray-100 dark:bg-gray-700 text-blue-600 dark:text-blue-400 p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50"
-                    title={t.audio?.title || 'Audio Recording'}
-                >
-                    <Mic size={18} />
-                </button>
-                <button
-                    onClick={handleSend}
-                    disabled={isLoadingChat || !input.trim()}
-                    className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:opacity-50"
-                >
-                    <Send size={18} />
-                </button>
+            <div className="p-3 border-t border-gray-200/50 dark:border-gray-800/80 flex gap-2 items-center bg-white dark:bg-[#151a24]">
+                <div className="flex gap-1 shrink-0">
+                    <button
+                        onClick={() => setUseSearch(!useSearch)}
+                        className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 ${useSearch ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                        title={useSearch ? "Websuche aktiv" : "Websuche aktivieren"}
+                    >
+                        <Globe size={18} />
+                    </button>
+                    <button
+                        onClick={() => setUseContext(!useContext)}
+                        className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 ${useContext ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400 shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                        title={useContext ? "Kontext aus Notizen aktiv" : "Kontext aus Notizen aktivieren"}
+                    >
+                        <Database size={18} />
+                    </button>
+                </div>
+                <div className="flex-1 relative flex items-center">
+                    <textarea
+                        ref={textareaRef}
+                        className="w-full border border-gray-200 dark:border-gray-700/50 rounded-2xl pl-4 pr-[76px] py-3 text-sm bg-gray-50/50 dark:bg-[#1e2430] dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 resize-none overflow-y-auto no-scrollbar min-h-[44px] max-h-[150px] shadow-sm transition-shadow placeholder:text-gray-400"
+                        placeholder={t.chat.placeholder}
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        disabled={isLoadingChat}
+                        rows={1}
+                        style={{ height: 'auto' }}
+                    />
+                    
+                    <div className="absolute right-1.5 bottom-1.5 flex items-center gap-1">
+                        <button
+                            onClick={() => setShowRecorder(true)}
+                            className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-blue-500 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+                            title={t.audio?.title || 'Audio Recording'}
+                        >
+                            <Mic size={16} />
+                        </button>
+                        <button
+                            onClick={handleSend}
+                            disabled={isLoadingChat || !input.trim()}
+                            className="w-8 h-8 flex items-center justify-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 shadow-sm shadow-blue-500/20 transition-all press-effect"
+                        >
+                            <Send size={14} className="translate-x-[-1px] translate-y-[1px]" />
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     );

@@ -191,15 +191,15 @@ function App() {
     <div {...swipeHandlers} className="flex flex-col h-full w-full bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans text-sm sm:text-base overflow-hidden">
       <ModalManager />
       {/* Header - Includes Safe Area Top */}
-      <header className="shrink-0 border-b dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm z-10 pt-[env(safe-area-inset-top)] print:hidden">
-        <div className="h-10 flex items-center justify-between px-4">
+      <header className="shrink-0 border-b border-gray-200/50 dark:border-gray-700/50 glass z-10 pt-[env(safe-area-inset-top)] print:hidden">
+        <div className="h-12 flex items-center justify-between px-4">
           <div className="flex items-center gap-3">
             <button
               onClick={toggleExplorer}
-              className={`p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${showExplorer ? 'bg-blue-50 dark:bg-gray-700 text-blue-600 dark:text-blue-400' : ''}`}
+              className={`p-2 rounded-xl transition-all duration-200 active:scale-95 ${showExplorer ? 'bg-blue-600 shadow-sm shadow-blue-600/20 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400'}`}
               title={showExplorer ? t.general.hideExplorer : t.general.showExplorer}
             >
-              {showExplorer ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
+              {showExplorer ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}
             </button>
             <button
               onClick={() => {
@@ -208,9 +208,9 @@ function App() {
                   setShowChat(false);
                 }
               }}
-              className={`flex items-center gap-2 font-bold text-lg text-blue-600 dark:text-blue-400 truncate ${isMobile ? 'cursor-pointer hover:opacity-80' : ''}`}
+              className={`flex items-center gap-2.5 font-display font-semibold tracking-tight text-xl text-gray-900 dark:text-white truncate press-effect ${isMobile ? 'cursor-pointer' : ''}`}
             >
-              <img src="/icon_32x32@2x.png" alt="Licium" className="w-5 h-5 shrink-0 rounded-sm" />
+              <img src="/icon_32x32@2x.png" alt="Licium" className="w-6 h-6 shrink-0 rounded-lg shadow-sm" />
               <span className="hidden sm:inline">Licium</span>
             </button>
           </div>
@@ -223,27 +223,27 @@ function App() {
             )}
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all duration-200 active:scale-95 text-gray-600 dark:text-gray-400"
               title={darkMode ? t.general.lightMode : t.general.darkMode}
             >
-              {darkMode ? <Sun size={18} className="text-yellow-400" /> : <Moon size={18} />}
+              {darkMode ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} />}
             </button>
             <button
               onClick={toggleChat}
-              className={`p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${showChat ? 'bg-blue-50 dark:bg-gray-700 text-blue-600 dark:text-blue-400' : ''}`}
+              className={`p-2 rounded-xl transition-all duration-200 active:scale-95 ${showChat ? 'bg-blue-600 shadow-sm shadow-blue-600/20 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400'}`}
               title={showChat ? t.general.hideChat : t.general.showChat}
             >
-              {showChat ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
+              {showChat ? <PanelRightClose size={20} /> : <PanelRightOpen size={20} />}
             </button>
-            <button onClick={toggleSettings} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full" title={t.settings.title}>
-              <SettingsIcon size={20} className="text-gray-600 dark:text-gray-300" />
+            <button onClick={toggleSettings} className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all duration-200 active:scale-95 text-gray-600 dark:text-gray-400" title={t.settings.title}>
+              <SettingsIcon size={20} />
             </button>
             <button
               onClick={logout}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-red-500"
+              className="p-2.5 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all duration-200 active:scale-95 text-red-500"
               title={t.general.logout}
             >
-              <LogOut size={18} />
+              <LogOut size={20} />
             </button>
           </div>
         </div>
@@ -282,11 +282,11 @@ function App() {
             {showExplorer && (
               <>
                 <Panel defaultSize={20} minSize={15} maxSize={40} className="print:hidden">
-                  <div className="h-full border-r dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex flex-col">
+                  <div className="h-full border-r border-gray-200/50 dark:border-gray-800/80 bg-gray-50/50 dark:bg-[#151a24] flex flex-col">
                     <TreeView onNodeSelect={() => isMobile && setShowExplorer(false)} isMobile={isMobile} />
                   </div>
                 </Panel>
-                <PanelResizeHandle className="w-1 bg-gray-200 dark:bg-gray-700 hover:bg-blue-500 dark:hover:bg-blue-600 transition-colors cursor-col-resize print:hidden" />
+                <PanelResizeHandle className="w-[1px] bg-gray-200/50 dark:bg-gray-800/80 hover:w-1 hover:bg-blue-500 dark:hover:bg-blue-600 transition-all cursor-col-resize print:hidden z-10 -ml-[1px]" />
               </>
             )}
 
@@ -300,9 +300,9 @@ function App() {
             {/* Right Sidebar: Chat */}
             {showChat && (
               <>
-                <PanelResizeHandle className="w-1 bg-gray-200 dark:bg-gray-700 hover:bg-blue-500 dark:hover:bg-blue-600 transition-colors cursor-col-resize print:hidden" />
+                <PanelResizeHandle className="w-[1px] bg-gray-200/50 dark:bg-gray-800/80 hover:w-1 hover:bg-blue-500 dark:hover:bg-blue-600 transition-all cursor-col-resize print:hidden z-10 -ml-[1px]" />
                 <Panel defaultSize={25} minSize={20} maxSize={50} className="print:hidden">
-                  <div className="h-full bg-white dark:bg-gray-900 flex flex-col shadow-lg">
+                  <div className="h-full border-l border-gray-200/50 dark:border-gray-800/80 bg-white/80 dark:bg-[#151a24] flex flex-col shadow-2xl">
                     <Chat />
                   </div>
                 </Panel>
