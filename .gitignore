@@ -3,3 +3,9 @@ k8s-conbro/
 
 TODO.md
 VERSION_MANAGEMENT.md
+
+# AI Agent Artifacts
+.agent/
+.agents/
+.claude/
+skills-lock.json

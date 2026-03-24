@@ -201,6 +201,7 @@ If you deployed the Whisper container:
 Licium is built on the shoulders of giants. A heartfelt thank you goes out to the incredible open-source projects and technologies that made this possible:
 
 *   **[@google](https://github.com/google)**: For the power of **Vibe-Coding**, **Antigravity**, and **Gemini**, which transformed the development of this project.
+*   **[@anthropic](https://github.com/anthropics)**: For their incredibly capable **Claude** models, which played a pivotal role in the AI-assisted development and continuous refinement of this project.
 *   **[@nhn](https://github.com/nhn) (Toast UI)**: For the excellent Markdown editor foundation.
 *   **[@searxng](https://github.com/searxng)**: For enabling privacy-respecting, metasearch capabilities.
 *   **[@jgraph](https://github.com/jgraph) (Draw.io / diagrams.net)**: For the powerful diagramming integration.
